@@ -1,0 +1,146 @@
+@import 'tailwindcss';
+
+/*
+ * Identidad visual · Panel Fitosanitario ANUC Zetaquirá (sistema de diseño "anucfito").
+ * Los tokens se declaran UNA sola vez aquí. Ningún color hexadecimal suelto en los
+ * componentes: usa las utilidades generadas (bg-verde-700, text-tinta-secundaria,
+ * border-borde-control, rounded-md, shadow-1, font-titulos, text-display...).
+ * Tailwind también expone cada token como variable CSS (var(--color-verde-700)).
+ */
+@theme {
+  /* Se desactiva la paleta por defecto de Tailwind: solo existen los colores del sistema */
+  --color-*: initial;
+  --color-transparent: transparent;
+  --color-current: currentColor;
+  --color-black: #000000;
+
+  /* ── Verdes de marca ─────────────────────────────────────────── */
+  --color-verde-950: #0b2e1c; /* Fondo de la barra lateral y panel de marca del login */
+  --color-verde-900: #123d27; /* Estado activo sobre la barra lateral */
+  --color-verde-800: #185232; /* Hover / presionado del botón primario */
+  --color-verde-700: #1e6b3e; /* PRIMARIO: botón primario, enlaces, pestaña activa */
+  --color-verde-600: #2b8550; /* Anillo de foco, iconos activos */
+  --color-verde-500: #3da066; /* Acento gráfico. Nunca texto */
+  --color-verde-400: #6bbe8a; /* Series secundarias. Nunca texto */
+  --color-verde-300: #a3d8b4; /* Texto secundario sobre verde-950 */
+  --color-verde-200: #cfebd8; /* Fila seleccionada; barra de coincidencia */
+  --color-verde-100: #e5f4ea; /* Fondo suave de éxito; hover de filas */
+  --color-verde-50: #f4faf6; /* FONDO GENERAL de la aplicación */
+
+  /* ── Superficies y texto ─────────────────────────────────────── */
+  --color-blanco: #ffffff; /* Tarjetas, tablas, formularios, modales, barra superior */
+  --color-tinta: #16241b; /* Texto principal y títulos */
+  --color-tinta-secundaria: #4a5b50; /* Texto de apoyo, encabezados de tabla */
+  --color-tinta-terciaria: #5f7166; /* Metadatos, placeholders (mínimo para texto) */
+  --color-borde: #d5e3da; /* Divisores y bordes decorativos */
+  --color-borde-control: #7e9888; /* Bordes de inputs, selects y checkboxes */
+
+  /* ── Semánticos (texto/icono + fondo suave) ──────────────────── */
+  --color-info: #1d5fa8; /* 'En análisis' */
+  --color-info-suave: #e8f1fb;
+  --color-advertencia: #8a5300; /* 'Pendiente de revisión', 'Requiere visita', alerta 'Generada' */
+  --color-advertencia-suave: #fff4e0;
+  --color-peligro: #b42318; /* Errores, acciones destructivas, alerta 'Confirmada' */
+  --color-peligro-suave: #fdecea;
+  --color-revision: #5b3fa0; /* 'Análisis técnico', 'Otra patología', alerta 'En revisión' */
+  --color-revision-suave: #f0ebfa;
+  --color-reabierto: #a1440f;
+  --color-reabierto-suave: #fdede3;
+  --color-neutro: #3e4c43; /* 'Creado', 'No identificado' */
+  --color-neutro-suave: #eef2ef;
+  --color-inactivo: #5f6b63; /* 'Descartado', cuentas deshabilitadas */
+  --color-inactivo-suave: #f1f3f1;
+
+  /* ── Categorías fitosanitarias (siempre con etiqueta) ────────── */
+  --color-cat-botrytis: #5e6a79;
+  --color-cat-rona: #8c5a2e;
+  --color-cat-magnesio: #a88400; /* texto encima en tinta, no blanco */
+  --color-cat-trips: #7b4fb0;
+  --color-cat-fusarium: #b23a48;
+
+  /* ── Mapa de concentración ───────────────────────────────────── */
+  --color-calor-1: #e5f4ea; /* sin casos o 1 confirmado */
+  --color-calor-2: #f2d27a; /* casos aislados */
+  --color-calor-3: #e38a3f; /* cerca del umbral */
+  --color-calor-4: #b42318; /* umbral alcanzado */
+
+  /* ── Tipografía ──────────────────────────────────────────────── */
+  --font-titulos: 'Plus Jakarta Sans', 'Segoe UI', system-ui, sans-serif;
+  --font-texto: Inter, 'Segoe UI', Roboto, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', Consolas, ui-monospace, monospace;
+  --font-sans: var(--font-texto);
+
+  /* Escala: text-display, text-h1 ... (tamaño + interlineado) */
+  --text-display: 32px;
+  --text-display--line-height: 40px;
+  --text-display--letter-spacing: -0.01em;
+  --text-h1: 26px;
+  --text-h1--line-height: 34px;
+  --text-h2: 20px;
+  --text-h2--line-height: 28px;
+  --text-h3: 17px;
+  --text-h3--line-height: 24px;
+  --text-kpi: 36px;
+  --text-kpi--line-height: 44px;
+  --text-cuerpo: 16px;
+  --text-cuerpo--line-height: 24px;
+  --text-cuerpo-sm: 14px;
+  --text-cuerpo-sm--line-height: 20px;
+  --text-nota: 13px;
+  --text-nota--line-height: 18px;
+  --text-sobretitulo: 12px;
+  --text-sobretitulo--line-height: 16px;
+  --text-sobretitulo--letter-spacing: 0.06em;
+
+  /* ── Espaciado: base de 4px (p-1 = 4px, p-2 = 8px, p-3 = 12px, p-4 = 16px, p-6 = 24px…) */
+  --spacing: 4px;
+
+  /* ── Radios ──────────────────────────────────────────────────── */
+  --radius-sm: 6px; /* Inputs, checkboxes, insignias rectangulares */
+  --radius-md: 10px; /* Botones y tarjetas pequeñas */
+  --radius-lg: 16px; /* Tarjetas principales, modales, fotos */
+  --radius-pill: 999px; /* Insignias de estado y chips */
+
+  /* ── Sombras ─────────────────────────────────────────────────── */
+  --shadow-1: 0 1px 2px rgba(11, 46, 28, 0.06), 0 1px 3px rgba(11, 46, 28, 0.08); /* Tarjetas */
+  --shadow-2: 0 8px 24px rgba(11, 46, 28, 0.14); /* Menús, modales, popovers */
+}
+
+@layer base {
+  body {
+    @apply bg-verde-50 font-texto text-cuerpo text-tinta antialiased;
+  }
+  h1,
+  h2,
+  h3 {
+    @apply font-titulos;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-verde-600);
+    outline-offset: 2px;
+  }
+}
+
+/* Clases de texto compuestas (fuente + tamaño + peso) usadas en todo el panel */
+@utility titulo-display {
+  @apply font-titulos text-display font-bold text-tinta;
+}
+@utility titulo-h1 {
+  @apply font-titulos text-h1 font-bold text-tinta;
+}
+@utility titulo-h2 {
+  @apply font-titulos text-h2 font-semibold text-tinta;
+}
+@utility titulo-h3 {
+  @apply font-titulos text-h3 font-semibold text-tinta;
+}
+@utility etiqueta {
+  @apply font-texto text-cuerpo-sm font-semibold text-tinta;
+}
+@utility sobretitulo {
+  @apply font-texto text-sobretitulo font-semibold uppercase text-tinta-secundaria;
+}
+@utility codigo {
+  @apply font-mono text-nota font-medium;
+  line-height: 20px;
+}
