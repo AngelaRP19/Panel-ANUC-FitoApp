@@ -17,10 +17,16 @@ export interface CasoFixture {
     resultado: ResultadoAnalisis
     categoria: Categoria | null
     porcentaje: number | null
+    /** Resultado ambiguo: la segunda categoría y su porcentaje. */
+    alternativa?: { categoria: Categoria; porcentaje: number } | null
   } | null
   tecnico: { id: string; nombre: string } | null
   /** null: «Sin enviar» (el chatbot aún no envía el caso al panel). */
   enviado_a_panel_en: string | null
+  /** Fecha de vencimiento de conservación: se fija al cerrar el caso (6 meses). */
+  vence_en: string | null
+  /** El vencimiento se extendió (pantalla 22). */
+  conservacion_extendida: boolean
 }
 
 /** «2026-09-28 09:14» en Bogotá (UTC-5) → ISO en UTC. */
@@ -448,6 +454,26 @@ function preliminar(categoria: CategoriaDiseno, porcentaje: number): CasoFixture
   return { resultado: 'PRELIMINAR', categoria, porcentaje }
 }
 
+const MS_DIA = 86_400_000
+
+// Casos cerrados con vencimiento cercano o extendido, para probar el filtro de conservación.
+// El resto vence 6 meses después del envío (aproximación al cierre).
+const VENCIMIENTOS: Record<string, { vence: string; extendida?: boolean }> = {
+  '0216': { vence: '2026-10-22 23:59' },
+  '0217': { vence: '2026-11-05 23:59' },
+  '0219': { vence: '2027-09-09 23:59', extendida: true },
+}
+
+function vencimiento(codigo: string, estado: EstadoCaso, enviado: string | null) {
+  if (estado !== 'CERRADO' || !enviado) return { vence_en: null, conservacion_extendida: false }
+  const especial = VENCIMIENTOS[codigo]
+  if (especial) {
+    return { vence_en: bogota(especial.vence), conservacion_extendida: !!especial.extendida }
+  }
+  const vence = new Date(new Date(bogota(enviado)).getTime() + 182 * MS_DIA).toISOString()
+  return { vence_en: vence, conservacion_extendida: false }
+}
+
 export const casos: CasoFixture[] = FILAS.map(
   ([codigo, prod, finca, cultivo, especie, cat, pct, estado, tec, enviado]) => ({
     id: codigo,
@@ -460,5 +486,22 @@ export const casos: CasoFixture[] = FILAS.map(
     preliminar: preliminar(cat, pct),
     tecnico: tec ? { ...TECNICOS[tec] } : null,
     enviado_a_panel_en: enviado ? bogota(enviado) : null,
+    ...vencimiento(codigo, estado, enviado),
   }),
 )
+
+// #0239: identificación ambigua entre Botrytis y Roña (artboard 04b).
+casos.find((c) => c.id === '0239')!.preliminar = {
+  resultado: 'AMBIGUO',
+  categoria: 'BOTRYTIS',
+  porcentaje: 58,
+  alternativa: { categoria: 'RONA', porcentaje: 42 },
+}
+
+// Copia inicial para restaurar los datos entre pruebas (las asignaciones los modifican).
+const inicial = structuredClone(casos)
+
+/** Restaura los casos del diseño (pruebas). */
+export function reiniciarCasos() {
+  casos.splice(0, casos.length, ...structuredClone(inicial))
+}

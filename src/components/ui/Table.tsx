@@ -5,7 +5,8 @@ import { Skeleton } from './Skeleton'
 
 export interface Column<T> {
   key: string
-  header: string
+  /** Texto del encabezado (puede llevar un icono, p. ej. el de orden). */
+  header: ReactNode
   render: (row: T) => ReactNode
   /** Ancho de la columna (CSS), p. ej. '96px' o '20%'. */
   width?: string

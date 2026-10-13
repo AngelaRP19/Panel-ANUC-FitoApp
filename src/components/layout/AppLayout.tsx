@@ -3,6 +3,7 @@ import { Outlet, useMatches } from 'react-router'
 import * as Dialog from '@radix-ui/react-dialog'
 import { X } from 'lucide-react'
 import { OfflineBanner } from '@/components/ui/OfflineBanner'
+import { useAuth } from '@/context/AuthContext'
 import { usePageTitle } from '@/hooks/usePageTitle'
 import { Sidebar, type NavBadges } from './Sidebar'
 import { SkipLink } from './SkipLink'
@@ -11,6 +12,8 @@ import { Topbar } from './Topbar'
 /** Metadatos de ruta: `handle: { titulo: 'Casos' }` define el título de la barra superior y de la pestaña. */
 export interface RouteHandle {
   titulo?: string
+  /** Título para el técnico, si cambia («Mis casos»). */
+  tituloTecnico?: string
 }
 
 interface AppLayoutProps {
@@ -24,10 +27,15 @@ interface AppLayoutProps {
 export function AppLayout({ badges, notificacionesNuevas, onReintentar }: AppLayoutProps) {
   const [menuAbierto, setMenuAbierto] = useState(false)
   const matches = useMatches()
+  const { usuario } = useAuth()
+  const esTecnico = usuario?.rol === 'TECNICO'
   const titulo =
     [...matches]
       .reverse()
-      .map((m) => (m.handle as RouteHandle | undefined)?.titulo)
+      .map((m) => {
+        const h = m.handle as RouteHandle | undefined
+        return (esTecnico && h?.tituloTecnico) || h?.titulo
+      })
       .find(Boolean) ?? ''
   usePageTitle(titulo)
 
