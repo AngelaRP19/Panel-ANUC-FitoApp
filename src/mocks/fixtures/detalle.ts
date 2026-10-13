@@ -2,6 +2,7 @@
 // los artboards 04, 04b y 04c; el resto se genera a partir de la bandeja. Datos ficticios (P-16).
 import type { Categoria, TipoEvidencia } from '@/types/enums'
 import { casos, type CasoFixture, type DiagnosticoFixture } from './casos'
+import { fincas } from './fincas'
 
 const MIN = 60_000
 const DIA = 86_400_000
@@ -417,14 +418,21 @@ export function explicacionDe(c: CasoFixture) {
 }
 
 export function detalleDe(c: CasoFixture) {
-  const [latitud, longitud] = COORDENADAS[c.finca.nombre] ?? [null, null]
+  // La finca y el cultivo salen de mocks/fixtures/fincas.ts (la misma fuente que la pantalla 9).
+  const finca = fincas.find((f) => f.id === c.finca.id)
+  const cultivo = finca?.cultivos.find((x) => x.id === c.cultivo.id)
+  const [latitud, longitud] = finca
+    ? [finca.latitud, finca.longitud]
+    : (COORDENADAS[c.finca.nombre] ?? [null, null])
   const ev = evidenciasDe(c)
   const cuest = cuestionarioDe(c)
   const historial = historialDe(c).filter((h) => !h.pendiente)
   const ultimo = historial[historial.length - 1]
   const p = c.preliminar
-  const invernadero = /invernadero/i.test(c.cultivo.nombre)
-  const especies = c.cultivo.nombre === 'Invernadero norte' ? ['GULUPA', 'GRANADILLA'] : [c.especie]
+  const invernadero = cultivo
+    ? cultivo.tipo === 'INVERNADERO'
+    : /invernadero/i.test(c.cultivo.nombre)
+  const especies = cultivo?.especies ?? [c.especie]
   const porTipo: Record<string, number> = {}
   for (const e of ev) porTipo[e.tipo] = (porTipo[e.tipo] ?? 0) + 1
   for (const t of TIPOS) porTipo[t] ??= 0

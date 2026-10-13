@@ -2,6 +2,7 @@
 // Un archivo por dominio; los datos viven en mocks/fixtures.
 import { authHandlers } from './auth'
 import { casosHandlers } from './casos'
+import { fincasHandlers } from './fincas'
 import { inicioHandlers } from './inicio'
 import { navegacionHandlers } from './navegacion'
 import { productoresHandlers } from './productores'
@@ -11,5 +12,6 @@ export const handlers = [
   ...navegacionHandlers,
   ...casosHandlers,
   ...productoresHandlers,
+  ...fincasHandlers,
   ...inicioHandlers,
 ]
