@@ -29,6 +29,9 @@ simulador en memoria (`src/mocks/authSimulado.ts`). Cuentas de demostración (co
 | `jhon.sanabria@anuc.test` | Técnico | Contraseña temporal: pide crear una nueva al entrar |
 | `diana.rincon@anuc.test` | Técnico deshabilitado | Mismo error genérico que credenciales incorrectas |
 
+Escenarios: abre cualquier ruta con `?mock=sin-lider` para simular un panel sin líder técnico
+(pantalla «Primer uso») y con `?mock=normal` para volver a los datos del diseño.
+
 Código de recuperación de cuenta en el simulador: `123456`. Tras 5 intentos fallidos responde
 «Demasiados intentos».
 

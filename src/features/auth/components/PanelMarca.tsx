@@ -1,5 +1,6 @@
 import type { FormEventHandler, ReactNode } from 'react'
 import { ClipboardCheck, Leaf, Map } from 'lucide-react'
+import { cn } from '@/utils/cn'
 
 const PUNTOS = [
   { icon: Leaf, texto: 'Gulupa, granadilla y maracuyá de Zetaquirá, Boyacá' },
@@ -10,12 +11,47 @@ const PUNTOS = [
   { icon: Map, texto: 'Mapa de vigilancia y alertas de posible concentración' },
 ]
 
+/** Contenido por defecto del panel de marca (login y recuperar cuenta). */
+function PresentacionPanel() {
+  return (
+    <>
+      <p className="mt-12 max-w-105 text-lg leading-7">
+        Revisa los casos que los productores envían por WhatsApp, registra el diagnóstico técnico y
+        vigila posibles concentraciones de casos.
+      </p>
+      <ul className="flex flex-col gap-4 text-[15px] leading-[22px]">
+        {PUNTOS.map(({ icon: Icon, texto }) => (
+          <li key={texto} className="flex gap-3">
+            <Icon
+              size={20}
+              strokeWidth={1.75}
+              className="flex-none text-verde-300"
+              aria-hidden="true"
+            />
+            {texto}
+          </li>
+        ))}
+      </ul>
+      <p className="mt-auto text-nota text-verde-300">
+        Uso exclusivo de los técnicos de la asociación.
+      </p>
+    </>
+  )
+}
+
 /**
- * Pantalla dividida de las rutas públicas (artboards 01, 01c, 01d, 01e): panel de marca de
- * 560 px sobre verde-950 a la izquierda y la tarjeta del formulario centrada a la derecha.
+ * Pantalla dividida de las rutas públicas (artboards 01, 01b, 01c, 01d, 01e): panel de marca
+ * de 560 px sobre verde-950 a la izquierda y la tarjeta del formulario centrada a la derecha.
  * En pantallas pequeñas el panel se reduce a la marca sobre la tarjeta.
  */
-export function PantallaMarca({ children }: { children: ReactNode }) {
+export function PantallaMarca({
+  children,
+  lateral = <PresentacionPanel />,
+}: {
+  children: ReactNode
+  /** Contenido del panel bajo la marca (primer uso muestra sus 3 pasos). */
+  lateral?: ReactNode
+}) {
   return (
     <div className="flex min-h-screen bg-verde-50">
       <aside
@@ -26,26 +62,7 @@ export function PantallaMarca({ children }: { children: ReactNode }) {
           <p className="font-titulos text-display font-bold text-blanco">ANUC Zetaquirá</p>
           <p className="font-medium text-verde-300">Panel fitosanitario</p>
         </div>
-        <p className="mt-12 max-w-105 text-lg leading-7">
-          Revisa los casos que los productores envían por WhatsApp, registra el diagnóstico técnico
-          y vigila posibles concentraciones de casos.
-        </p>
-        <ul className="flex flex-col gap-4 text-[15px] leading-[22px]">
-          {PUNTOS.map(({ icon: Icon, texto }) => (
-            <li key={texto} className="flex gap-3">
-              <Icon
-                size={20}
-                strokeWidth={1.75}
-                className="flex-none text-verde-300"
-                aria-hidden="true"
-              />
-              {texto}
-            </li>
-          ))}
-        </ul>
-        <p className="mt-auto text-nota text-verde-300">
-          Uso exclusivo de los técnicos de la asociación.
-        </p>
+        {lateral}
       </aside>
 
       <main
@@ -63,22 +80,27 @@ export function PantallaMarca({ children }: { children: ReactNode }) {
   )
 }
 
-/** Tarjeta de 440 px de los formularios de acceso (pf-card, padding 40). */
+/** Tarjeta de los formularios de acceso (pf-card): 440 px, o 520 px en primer uso. */
 export function TarjetaAcceso({
   children,
   labelledBy,
   onSubmit,
+  ancha = false,
 }: {
   children: ReactNode
   labelledBy: string
   onSubmit: FormEventHandler<HTMLFormElement>
+  ancha?: boolean
 }) {
   return (
     <form
       noValidate
       onSubmit={onSubmit}
       aria-labelledby={labelledBy}
-      className="flex w-full max-w-110 flex-col gap-5 rounded-lg border border-borde bg-blanco p-6 shadow-1 sm:p-10"
+      className={cn(
+        'flex w-full flex-col rounded-lg border border-borde bg-blanco p-6 shadow-1',
+        ancha ? 'max-w-130 gap-4.5 sm:px-10 sm:py-9' : 'max-w-110 gap-5 sm:p-10',
+      )}
     >
       {children}
     </form>
