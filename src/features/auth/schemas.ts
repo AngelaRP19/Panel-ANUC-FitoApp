@@ -62,3 +62,24 @@ export const primerLiderSchema = z
     message: MENSAJES.contrasenasNoCoinciden,
   })
 export type PrimerLiderValues = z.infer<typeof primerLiderSchema>
+
+/** Recuperar cuenta, paso 1: correo (artboard 01c). */
+export const solicitarCodigoSchema = z.object({ correo })
+export type SolicitarCodigoValues = z.infer<typeof solicitarCodigoSchema>
+
+/** Recuperar cuenta, paso 2: código de 6 dígitos y nueva contraseña (artboard 01d). */
+export const recuperacionSchema = z
+  .object({
+    codigo: z
+      .string()
+      .trim()
+      .min(1, 'Escribe el código de verificación')
+      .regex(/^\d{6}$/, 'El código tiene 6 dígitos'),
+    nueva: contrasenaNueva('Escribe la nueva contraseña'),
+    confirmar: z.string().min(1, 'Confirma la nueva contraseña'),
+  })
+  .refine((v) => v.nueva === v.confirmar, {
+    path: ['confirmar'],
+    message: MENSAJES.contrasenasNoCoinciden,
+  })
+export type RecuperacionValues = z.infer<typeof recuperacionSchema>

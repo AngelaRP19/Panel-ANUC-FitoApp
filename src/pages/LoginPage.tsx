@@ -7,16 +7,11 @@ import {
   useEstadoAuth,
   useLogout,
   type AvisoLogin,
+  type EstadoVueltaLogin,
 } from '@/features/auth'
 import { usePageTitle } from '@/hooks/usePageTitle'
 import { MENSAJES } from '@/locales/es'
 import { PATHS } from '@/routes/paths'
-
-/** Estado de navegación con el que vuelve la recuperación de cuenta (pantalla 3, diseño 01e). */
-export interface EstadoVueltaLogin {
-  contrasenaActualizada?: boolean
-  correo?: string
-}
 
 /**
  * Inicio de sesión (diseño 01 · RQF02). Con sesión iniciada, PublicOnlyRoute lleva a la ruta

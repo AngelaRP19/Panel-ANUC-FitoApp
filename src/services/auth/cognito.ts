@@ -55,7 +55,7 @@ async function conErrores<T>(fn: () => Promise<T>): Promise<T> {
   try {
     return await fn()
   } catch (error) {
-    throw traducirError(error)
+    throw error instanceof ErrorAuth ? error : traducirError(error)
   }
 }
 
@@ -89,9 +89,18 @@ export const adaptadorCognito: AdaptadorAuth = {
     }
   },
 
+  // Nota: con la protección contra enumeración de usuarios activa, Cognito no informa si el
+  // correo existe. Para el mensaje de RQF06 hace falta el endpoint propio del backend (P-08).
   solicitarCodigo: (correo) =>
     conErrores(async () => {
-      await resetPassword({ username: correo })
+      try {
+        await resetPassword({ username: correo })
+      } catch (error) {
+        if (error instanceof Error && error.name === 'UserNotFoundException') {
+          throw new ErrorAuth('CUENTA_INEXISTENTE')
+        }
+        throw error
+      }
     }),
 
   confirmarRecuperacion: (correo, codigo, nueva) =>

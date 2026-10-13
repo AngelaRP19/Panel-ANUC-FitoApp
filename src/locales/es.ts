@@ -137,6 +137,9 @@ export const MENSAJES = {
   demasiadosIntentos: 'Demasiados intentos. Espera unos minutos e inténtalo de nuevo.',
   cuentaInexistente: 'No hay ninguna cuenta registrada con este correo',
   contrasenaActualizada: 'Contraseña actualizada.',
+  codigoInvalido: 'El código no es correcto o ya venció. Pide uno nuevo.',
+  demasiadosIntentosTitulo: 'Demasiados intentos.',
+  demasiadosIntentosTexto: 'Espera unos minutos e inténtalo de nuevo.',
 
   // Validación de formularios
   campoObligatorio: 'Este campo es obligatorio',
