@@ -57,6 +57,19 @@ export function registrarSesionExpirada(fn: (() => void) | null) {
   alExpirarSesion = fn
 }
 
+// 403/404 al pedir un caso: puede ser de otro técnico. Quien monta el panel decide si muestra
+// «No tienes acceso a este caso» (el backend responde 404 para no revelar que el caso existe).
+let alCasoInaccesible: ((idCaso: string, status: number) => void) | null = null
+export function registrarCasoInaccesible(fn: ((idCaso: string, status: number) => void) | null) {
+  alCasoInaccesible = fn
+}
+
+/** id del caso si la URL es `/casos/{id}` o un subrecurso (`/casos/{id}/evidencias`). */
+function idCasoDeUrl(url: string | undefined): string | null {
+  const m = url ? /^\/casos\/([^/?]+)/.exec(url) : null
+  return m && m[1] !== 'conteos' ? decodeURIComponent(m[1]!) : null
+}
+
 api.interceptors.request.use(async (cfg) => {
   // El proveedor de identidad (Cognito) renueva el token si hace falta.
   const token = await obtenerToken()
@@ -69,6 +82,10 @@ api.interceptors.response.use(
   (error: AxiosError<CuerpoError>) => {
     const normalizado = normalizar(error)
     if (normalizado.status === 401) alExpirarSesion?.()
+    if (normalizado.status === 403 || normalizado.status === 404) {
+      const idCaso = idCasoDeUrl(error.config?.url)
+      if (idCaso) alCasoInaccesible?.(idCaso, normalizado.status)
+    }
     return Promise.reject(normalizado)
   },
 )
