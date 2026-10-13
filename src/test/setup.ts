@@ -4,6 +4,7 @@ import { afterAll, afterEach, beforeAll } from 'vitest'
 import { reiniciarAuthSimulada } from '@/mocks/authSimulado'
 import { fijarEscenario } from '@/mocks/escenario'
 import { reiniciarCasos } from '@/mocks/fixtures/casos'
+import { reiniciarFincas } from '@/mocks/fixtures/fincas'
 import { reiniciarProductores } from '@/mocks/fixtures/productores'
 import { server } from '@/mocks/server'
 
@@ -24,6 +25,7 @@ afterEach(() => {
   fijarEscenario('normal')
   reiniciarCasos()
   reiniciarProductores()
+  reiniciarFincas()
   sessionStorage.clear()
 })
 afterAll(() => server.close())

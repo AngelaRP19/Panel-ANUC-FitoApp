@@ -16,8 +16,9 @@ export function errorApi(
   codigo: string,
   mensaje: string,
   campos: Record<string, string> = {},
+  detalle?: unknown,
 ) {
-  return HttpResponse.json({ error: { codigo, mensaje, campos } }, { status })
+  return HttpResponse.json({ error: { codigo, mensaje, campos, detalle } }, { status })
 }
 
 export const noAutenticado = () => errorApi(401, 'NO_AUTENTICADO', 'La sesión no es válida')

@@ -14,18 +14,22 @@ export class ErrorApi extends Error {
   readonly campos: Record<string, string>
   /** Código HTTP; null si no hubo respuesta (sin conexión). */
   readonly status: number | null
+  /** Datos adicionales del error (p. ej. los casos afectados en un 409). */
+  readonly detalle: unknown
 
   constructor(params: {
     codigo: string
     mensaje: string
     campos?: Record<string, string>
     status: number | null
+    detalle?: unknown
   }) {
     super(params.mensaje)
     this.name = 'ErrorApi'
     this.codigo = params.codigo
     this.campos = params.campos ?? {}
     this.status = params.status
+    this.detalle = params.detalle ?? null
   }
 }
 
@@ -35,7 +39,7 @@ export function esErrorApi(error: unknown): error is ErrorApi {
 
 /** Formato único de error del backend. */
 interface CuerpoError {
-  error?: { codigo?: string; mensaje?: string; campos?: Record<string, string> }
+  error?: { codigo?: string; mensaje?: string; campos?: Record<string, string>; detalle?: unknown }
 }
 
 function normalizar(error: AxiosError<CuerpoError>): ErrorApi {
@@ -48,6 +52,7 @@ function normalizar(error: AxiosError<CuerpoError>): ErrorApi {
     mensaje: cuerpo?.mensaje ?? MENSAJES.errorGenerico,
     campos: cuerpo?.campos,
     status: error.response.status,
+    detalle: cuerpo?.detalle,
   })
 }
 

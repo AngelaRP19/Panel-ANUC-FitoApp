@@ -1,6 +1,16 @@
-// Llamadas HTTP del feature "cultivos" (RQF16-18). Único lugar que usa `api`.
-// Endpoints: GET/POST /fincas/{id}/cultivos · PATCH /cultivos/{id} · GET /especies
-// Tipos: importar de '@/types/api' (generado desde OpenAPI con `npm run gen:api`).
-// Uso: import { api } from '@/services/apiClient'
+// Llamadas HTTP del feature "cultivos" (RQF17-18). Único lugar del feature que usa `api`.
+// Endpoints: POST /fincas/{id}/cultivos
+import { api } from '@/services/apiClient'
+import type { Especie, TipoCultivo } from '@/types/enums'
 
-export {}
+export interface DatosCultivo {
+  nombre: string
+  tipo: TipoCultivo
+  especies: Especie[]
+}
+
+/** Agrega un cultivo a la finca. Responde con la finca actualizada. */
+export async function agregarCultivo(fincaId: string, datos: DatosCultivo): Promise<unknown> {
+  const { data } = await api.post(`/fincas/${encodeURIComponent(fincaId)}/cultivos`, datos)
+  return data
+}

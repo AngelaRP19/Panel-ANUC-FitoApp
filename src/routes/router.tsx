@@ -5,6 +5,7 @@ import { Spinner } from '@/components/ui/Spinner'
 import CasoDetallePage from '@/pages/CasoDetallePage'
 import CasosPage from '@/pages/CasosPage'
 import EnConstruccionPage from '@/pages/EnConstruccionPage'
+import FincasPage from '@/pages/FincasPage'
 import LoginPage from '@/pages/LoginPage'
 import MiCuentaPage from '@/pages/MiCuentaPage'
 import NotFoundPage from '@/pages/NotFoundPage'
@@ -105,7 +106,7 @@ export const rutas: RouteObject[] = [
                 element: <ProductoresPage />,
                 handle: titulo('Productores'),
               },
-              pendiente(PATHS.fincas, 'Fincas y cultivos', 9),
+              { path: PATHS.fincas, element: <FincasPage />, handle: titulo('Fincas y cultivos') },
               pendiente(PATHS.tecnicos, 'Técnicos', 10),
               pendiente(PATHS.parametros, 'Parámetros epidemiológicos', 13),
               pendiente(PATHS.documentacion, 'Documentación fitosanitaria', 20),
