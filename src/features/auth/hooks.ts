@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router'
 import { useAuth } from '@/context/AuthContext'
 import { PATHS } from '@/routes/paths'
-import { obtenerEstadoAuth } from './api'
+import { crearPrimerLider, obtenerEstadoAuth, type DatosPrimerLider } from './api'
 import type { LoginValues } from './schemas'
 
 export const authKeys = {
@@ -28,6 +28,20 @@ export function useLogin() {
 export function useConfirmarNuevaContrasena() {
   const { confirmarNuevaContrasena } = useAuth()
   return useMutation({ mutationFn: (nueva: string) => confirmarNuevaContrasena(nueva) })
+}
+
+/** Crea la cuenta del primer líder técnico y entra al panel con ella (RQF01). */
+export function useCrearPrimerLider() {
+  const { iniciarSesion } = useAuth()
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (datos: DatosPrimerLider) => {
+      await crearPrimerLider(datos)
+      // TODO(P-09): si Cognito exige verificar el correo, aquí va el paso de verificación.
+      return iniciarSesion(datos.correo, datos.password)
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: authKeys.estado() }),
+  })
 }
 
 /** Cierra la sesión (si el proveedor falla, igual se limpia la sesión local). */

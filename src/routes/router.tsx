@@ -5,6 +5,7 @@ import { Spinner } from '@/components/ui/Spinner'
 import EnConstruccionPage from '@/pages/EnConstruccionPage'
 import LoginPage from '@/pages/LoginPage'
 import NotFoundPage from '@/pages/NotFoundPage'
+import PrimerUsoPage from '@/pages/PrimerUsoPage'
 import { Rol } from '@/types/enums'
 import { IndexRedirect } from './IndexRedirect'
 import { InicioPorRol } from './InicioPorRol'
@@ -50,7 +51,7 @@ export const router = createBrowserRouter([
     element: <PublicOnlyRoute />,
     children: [
       { path: PATHS.login, element: <LoginPage /> },
-      pendiente(PATHS.primerUso, 'Primer uso', 2),
+      { path: PATHS.primerUso, element: <PrimerUsoPage /> },
       pendiente(PATHS.recuperarCuenta, 'Recuperar cuenta', 3),
     ],
   },
