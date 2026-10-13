@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import axios from 'axios'
-import { Alert } from '@/components/ui/Alert'
+import { Aviso } from '@/components/ui/Aviso'
 import { Button } from '@/components/ui/Button'
 import { fieldDescriptionId, FormField, RequiredLegend } from '@/components/ui/FormField'
 import { Input } from '@/components/ui/Input'
+import { MENSAJES } from '@/locales/es'
+import { esErrorAuth } from '@/services/auth'
 import { useLogin } from '../hooks'
 import { loginSchema, type LoginValues } from '../schemas'
 
@@ -13,13 +14,13 @@ interface LoginFormProps {
   onSuccess: () => void
 }
 
+// TODO(pantalla 1): reto de contraseña temporal, enlace «Recupérala» y aviso de sesión expirada.
 function mensajeDeError(error: unknown): string {
-  const status = axios.isAxiosError(error) ? error.response?.status : undefined
-  // Mensaje genérico: no se revela qué dato falló (RQNF03)
-  if (status === 401 || status === 403)
-    return 'El correo o la contraseña no son correctos. Revisa los datos e intenta de nuevo.'
-  if (status === 429) return 'Demasiados intentos. Espera un momento antes de volver a intentarlo.'
-  return 'No fue posible conectar con el servidor. Intenta de nuevo en unos minutos.'
+  const codigo = esErrorAuth(error) ? error.codigo : 'DESCONOCIDO'
+  // Mensaje genérico: no se revela qué dato falló ni si la cuenta está deshabilitada (RQF02)
+  if (codigo === 'CREDENCIALES') return MENSAJES.credencialesIncorrectas
+  if (codigo === 'DEMASIADOS_INTENTOS') return MENSAJES.demasiadosIntentos
+  return MENSAJES.errorConexionTexto
 }
 
 export function LoginForm({ onSuccess }: LoginFormProps) {
@@ -34,7 +35,9 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
     defaultValues: { correo: '', password: '' },
   })
 
-  const onSubmit = handleSubmit((values) => loginMutation.mutate(values, { onSuccess }))
+  const onSubmit = handleSubmit((values) =>
+    loginMutation.mutate(values, { onSuccess: (r) => r.paso === 'LISTO' && onSuccess() }),
+  )
 
   return (
     <form
@@ -51,9 +54,9 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
       </div>
 
       {loginMutation.isError && (
-        <Alert tone="danger" title="No pudimos iniciar sesión.">
+        <Aviso tono="peligro" titulo="No pudimos iniciar sesión.">
           {mensajeDeError(loginMutation.error)}
-        </Alert>
+        </Aviso>
       )}
 
       <RequiredLegend />

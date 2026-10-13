@@ -1,5 +1,6 @@
 // Enums del dominio como objetos `as const` (compatibles con erasableSyntaxOnly).
-// Deben coincidir con los valores del backend.
+// Deben coincidir con los valores del backend. Si la API envía un valor que no está
+// aquí, las etiquetas de `locales/es.ts` lo muestran con un texto genérico.
 
 export const Rol = {
   LIDER_TECNICO: 'LIDER_TECNICO',
@@ -7,11 +8,18 @@ export const Rol = {
 } as const
 export type Rol = (typeof Rol)[keyof typeof Rol]
 
+/**
+ * Estados del caso (decisión del equipo). No existe REABIERTO: los casos cerrados no se reabren.
+ * CREADO / EN_ANALISIS: el chatbot aún no envía el caso al panel.
+ * PENDIENTE_REVISION: en el panel, sin técnico. EN_REVISION: con técnico, sin diagnóstico.
+ * REGISTRADO: diagnóstico guardado, falta cerrar.
+ */
 export const EstadoCaso = {
   CREADO: 'CREADO',
   EN_ANALISIS: 'EN_ANALISIS',
   PENDIENTE_REVISION: 'PENDIENTE_REVISION',
-  ANALISIS_TECNICO: 'ANALISIS_TECNICO',
+  EN_REVISION: 'EN_REVISION',
+  REGISTRADO: 'REGISTRADO',
   CERRADO: 'CERRADO',
   DESCARTADO: 'DESCARTADO',
 } as const
@@ -57,16 +65,27 @@ export const Especie = {
 } as const
 export type Especie = (typeof Especie)[keyof typeof Especie]
 
+/** Un cultivo es una unidad productiva dentro de una finca; contiene una o varias especies. */
+export const TipoCultivo = {
+  INVERNADERO: 'INVERNADERO',
+  CAMPO_ABIERTO: 'CAMPO_ABIERTO',
+} as const
+export type TipoCultivo = (typeof TipoCultivo)[keyof typeof TipoCultivo]
+
+/** PLANTA_COMPLETA, si llega de la API, se agrupa como «Otras». */
 export const TipoEvidencia = {
   HOJA: 'HOJA',
+  ENVES: 'ENVES',
   FRUTO: 'FRUTO',
   TALLO: 'TALLO',
   PLANTA_COMPLETA: 'PLANTA_COMPLETA',
 } as const
 export type TipoEvidencia = (typeof TipoEvidencia)[keyof typeof TipoEvidencia]
 
-export const Afectacion = {
-  TOTAL: 'TOTAL',
-  PARCIAL: 'PARCIAL',
+/** Veredas del diseño. La lista real viene de la API. */
+export const Vereda = {
+  JURACAMBITA: 'JURACAMBITA',
+  CENTRO: 'CENTRO',
+  SAN_LUIS: 'SAN_LUIS',
 } as const
-export type Afectacion = (typeof Afectacion)[keyof typeof Afectacion]
+export type Vereda = (typeof Vereda)[keyof typeof Vereda]

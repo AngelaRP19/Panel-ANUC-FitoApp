@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { AuthProvider } from '@/context/AuthContext'
-import { LIDER_DEMO } from '@/mocks/handlers'
+import { CONTRASENA_DEMO } from '@/mocks/fixtures/usuarios'
 import { LoginForm } from './LoginForm'
 
 function renderForm(onSuccess = vi.fn()) {
@@ -32,7 +32,7 @@ describe('LoginForm', () => {
 
   it('muestra un error genérico con credenciales incorrectas', async () => {
     const { user, onSuccess } = renderForm()
-    await user.type(screen.getByLabelText(/Correo electrónico/), LIDER_DEMO.correo)
+    await user.type(screen.getByLabelText(/Correo electrónico/), 'lider@anuc.test')
     await user.type(screen.getByLabelText(/^Contraseña/), 'incorrecta')
     await user.click(screen.getByRole('button', { name: 'Ingresar' }))
     expect(await screen.findByText('No pudimos iniciar sesión.')).toBeInTheDocument()
@@ -41,10 +41,21 @@ describe('LoginForm', () => {
 
   it('inicia sesión con credenciales válidas', async () => {
     const { user, onSuccess } = renderForm()
-    await user.type(screen.getByLabelText(/Correo electrónico/), LIDER_DEMO.correo)
-    await user.type(screen.getByLabelText(/^Contraseña/), LIDER_DEMO.password)
+    await user.type(screen.getByLabelText(/Correo electrónico/), 'lider@anuc.test')
+    await user.type(screen.getByLabelText(/^Contraseña/), CONTRASENA_DEMO)
     await user.click(screen.getByRole('button', { name: 'Ingresar' }))
     await vi.waitFor(() => expect(onSuccess).toHaveBeenCalled())
+  })
+
+  it('da el mismo mensaje genérico si la cuenta está deshabilitada', async () => {
+    const { user, onSuccess } = renderForm()
+    await user.type(screen.getByLabelText(/Correo electrónico/), 'diana.rincon@anuc.test')
+    await user.type(screen.getByLabelText(/^Contraseña/), CONTRASENA_DEMO)
+    await user.click(screen.getByRole('button', { name: 'Ingresar' }))
+    expect(
+      await screen.findByText(/El correo o la contraseña no son correctos/),
+    ).toBeInTheDocument()
+    expect(onSuccess).not.toHaveBeenCalled()
   })
 
   it('permite mostrar y ocultar la contraseña', async () => {

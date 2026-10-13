@@ -1,17 +1,24 @@
+import type { ReactNode } from 'react'
+import { AlertTriangle, type LucideIcon } from 'lucide-react'
 import { Button } from './Button'
 import { Modal } from './Modal'
 
 interface ConfirmDialogProps {
   open: boolean
   title: string
-  message: string
+  message: ReactNode
   confirmLabel?: string
+  /** Acción destructiva o que cambia el acceso: botón rojo e icono de peligro. */
   danger?: boolean
   loading?: boolean
+  icon?: LucideIcon
+  /** Campos extra (p. ej. «Motivo del descarte *»). */
+  children?: ReactNode
   onConfirm: () => void
   onCancel: () => void
 }
 
+/** Confirmación de una acción (alertdialog): Cancelar / acción. */
 export function ConfirmDialog({
   open,
   title,
@@ -19,6 +26,8 @@ export function ConfirmDialog({
   confirmLabel = 'Confirmar',
   danger = false,
   loading = false,
+  icon = AlertTriangle,
+  children,
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
@@ -26,7 +35,12 @@ export function ConfirmDialog({
     <Modal
       open={open}
       onClose={onCancel}
+      role="alertdialog"
       title={title}
+      description={message}
+      icon={icon}
+      iconTone={danger ? 'peligro' : 'adv'}
+      hideClose
       footer={
         <>
           <Button variant="secondary" onClick={onCancel} disabled={loading}>
@@ -38,7 +52,7 @@ export function ConfirmDialog({
         </>
       }
     >
-      <p className="text-sm text-tinta-secundaria">{message}</p>
+      {children}
     </Modal>
   )
 }

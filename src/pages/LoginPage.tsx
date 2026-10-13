@@ -1,7 +1,8 @@
 import { ClipboardCheck, Leaf, Map } from 'lucide-react'
-import { Navigate, useLocation, useNavigate, type Location } from 'react-router'
-import { useAuth } from '@/context/AuthContext'
+import { useLocation, useNavigate, type Location } from 'react-router'
 import { LoginForm } from '@/features/auth'
+import { usePageTitle } from '@/hooks/usePageTitle'
+import { PATHS } from '@/routes/paths'
 
 const PUNTOS = [
   { icon: Leaf, texto: 'Gulupa, granadilla y maracuyá de Zetaquirá, Boyacá' },
@@ -12,14 +13,12 @@ const PUNTOS = [
   { icon: Map, texto: 'Mapa de vigilancia y alertas de posible concentración' },
 ]
 
-// TODO(F2): consultar GET /auth/estado y redirigir a /setup si aún no existe un líder (RQF01).
+// TODO(pantalla 1): consultar GET /auth/estado y redirigir a /primer-uso si aún no hay líder (RQF01).
 export default function LoginPage() {
-  const { usuario } = useAuth()
+  usePageTitle('Inicia sesión')
   const navigate = useNavigate()
   const location = useLocation()
-  const destino = (location.state as { from?: Location } | null)?.from?.pathname ?? '/casos'
-
-  if (usuario) return <Navigate to={destino} replace />
+  const destino = (location.state as { from?: Location } | null)?.from?.pathname ?? PATHS.inicio
 
   return (
     <div className="flex min-h-screen bg-verde-50">
@@ -47,7 +46,7 @@ export default function LoginPage() {
           ))}
         </ul>
         <p className="mt-auto text-nota text-verde-300">
-          Uso exclusivo de los técnicos de la asociación. Los productores consultan por WhatsApp.
+          Uso exclusivo de los técnicos de la asociación. 
         </p>
       </aside>
 
