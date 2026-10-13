@@ -3,7 +3,16 @@ import { configure } from '@testing-library/react'
 import { afterAll, afterEach, beforeAll } from 'vitest'
 import { reiniciarAuthSimulada } from '@/mocks/authSimulado'
 import { fijarEscenario } from '@/mocks/escenario'
+import { reiniciarCasos } from '@/mocks/fixtures/casos'
+import { reiniciarProductores } from '@/mocks/fixtures/productores'
 import { server } from '@/mocks/server'
+
+// jsdom no implementa ResizeObserver (lo usan componentes de Radix como Switch).
+globalThis.ResizeObserver ??= class {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
 
 // Margen para máquinas lentas: las pruebas de pantalla corren en paralelo.
 configure({ asyncUtilTimeout: 5000 })
@@ -13,5 +22,8 @@ afterEach(() => {
   server.resetHandlers()
   reiniciarAuthSimulada()
   fijarEscenario('normal')
+  reiniciarCasos()
+  reiniciarProductores()
+  sessionStorage.clear()
 })
 afterAll(() => server.close())

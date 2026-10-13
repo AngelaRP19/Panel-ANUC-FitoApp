@@ -95,7 +95,7 @@ export function KpiCards({ resumen }: { resumen: ResumenPanel }) {
         ariaLabel={`${plural(c.total, 'caso cerrado', 'casos cerrados')} en ${mes}. Ver en casos`}
       />
       <Kpi
-        to="/casos?proximos_a_vencer=true"
+        to="/casos?estado=CERRADO&vencimiento=15"
         rotulo="Próximos a vencer"
         valor={kpis.proximos_a_vencer}
         pie={`Fecha de vencimiento de conservación en menos de ${kpis.dias_aviso_vencimiento} días`}
