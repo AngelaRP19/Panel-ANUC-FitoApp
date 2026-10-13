@@ -1,9 +1,15 @@
 // Llamadas HTTP del feature "casos" (RQF20-24). Único lugar del feature que usa `api`.
 // Endpoints: GET /casos · GET /casos/conteos · GET /casos/filtros · PATCH /casos/{id}/asignacion
 //            GET /tecnicos?activo=true&con_carga=true
+//            GET /casos/{id} · /evidencias · /cuestionario · /historial · /explicacion
 import { api } from '@/services/apiClient'
 import type {
+  CasoDetalle,
   CasoResumen,
+  Cuestionario,
+  EventoHistorial,
+  Evidencia,
+  Explicacion,
   ConteosCasos,
   FiltrosCasos,
   OpcionesFiltroCasos,
@@ -62,5 +68,34 @@ export async function asignarTecnico(idCaso: string, tecnicoId: string): Promise
   const { data } = await api.patch<CasoResumen>(`/casos/${encodeURIComponent(idCaso)}/asignacion`, {
     tecnico_id: tecnicoId,
   })
+  return data
+}
+
+const ruta = (id: string, parte = '') => `/casos/${encodeURIComponent(id)}${parte}`
+
+/** Detalle consolidado. Un caso de otro técnico responde 404 (el interceptor lleva a /sin-acceso). */
+export async function obtenerCaso(id: string): Promise<CasoDetalle> {
+  const { data } = await api.get<CasoDetalle>(ruta(id))
+  return data
+}
+
+/** Evidencias con URLs prefirmadas (vencen: se piden de nuevo si una imagen falla). */
+export async function obtenerEvidencias(id: string): Promise<Evidencia[]> {
+  const { data } = await api.get<Evidencia[]>(ruta(id, '/evidencias'))
+  return data
+}
+
+export async function obtenerCuestionario(id: string): Promise<Cuestionario> {
+  const { data } = await api.get<Cuestionario>(ruta(id, '/cuestionario'))
+  return data
+}
+
+export async function obtenerHistorial(id: string): Promise<EventoHistorial[]> {
+  const { data } = await api.get<EventoHistorial[]>(ruta(id, '/historial'))
+  return data
+}
+
+export async function obtenerExplicacion(id: string): Promise<Explicacion> {
+  const { data } = await api.get<Explicacion>(ruta(id, '/explicacion'))
   return data
 }

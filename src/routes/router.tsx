@@ -2,6 +2,7 @@ import { lazy, Suspense, type ReactNode } from 'react'
 import { createBrowserRouter, type RouteObject } from 'react-router'
 import type { RouteHandle } from '@/components/layout/AppLayout'
 import { Spinner } from '@/components/ui/Spinner'
+import CasoDetallePage from '@/pages/CasoDetallePage'
 import CasosPage from '@/pages/CasosPage'
 import EnConstruccionPage from '@/pages/EnConstruccionPage'
 import LoginPage from '@/pages/LoginPage'
@@ -75,7 +76,11 @@ export const rutas: RouteObject[] = [
             element: <CasosPage />,
             handle: { titulo: 'Casos', tituloTecnico: 'Mis casos' } satisfies RouteHandle,
           },
-          pendiente('/casos/:id', 'Detalle del caso', 6),
+          {
+            path: '/casos/:id',
+            element: <CasoDetallePage />,
+            handle: { titulo: 'Casos', tituloTecnico: 'Mis casos' } satisfies RouteHandle,
+          },
           pendiente(PATHS.alertas, 'Alertas epidemiológicas', 11),
           { path: PATHS.miCuenta, element: <MiCuentaPage />, handle: titulo('Mi cuenta') },
           { path: PATHS.sinAcceso, element: <SinAccesoPage />, handle: titulo('Mis casos') },

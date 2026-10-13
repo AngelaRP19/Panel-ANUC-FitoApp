@@ -3,10 +3,17 @@ export * from './hooks'
 export type * from './types'
 export { CasosTabs } from './components/CasosTabs'
 export { CasosFiltros, FiltrosActivos } from './components/CasosFiltros'
-export { CLAVES_PANEL, type FiltrosPanel } from './utils'
+export { CLAVES_PANEL, esCasoNoEncontrado, type FiltrosPanel } from './utils'
 export { CasosTable } from './components/CasosTable'
 export { ResumenCasoModal } from './components/ResumenCasoModal'
-export { GaleriaEvidencias } from './components/GaleriaEvidencias'
+export { CasoEncabezado } from './components/CasoEncabezado'
 export { ResultadoPreliminar } from './components/ResultadoPreliminar'
-export { FormDiagnostico } from './components/FormDiagnostico'
+export { GaleriaEvidencias } from './components/GaleriaEvidencias'
+export {
+  CuestionarioDialog,
+  HistorialDialog,
+  ProductorFincaDialog,
+  ReasignarDialog,
+} from './components/VentanasCaso'
 export { Timeline } from './components/Timeline'
+export { FormDiagnostico } from './components/FormDiagnostico'

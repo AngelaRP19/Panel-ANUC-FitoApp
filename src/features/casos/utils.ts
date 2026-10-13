@@ -1,8 +1,9 @@
 // Utilidades del feature "casos" (sin componentes, para no romper el refresco rápido).
-import { ESTADO_CASO_LABEL, etiqueta } from '@/locales/es'
-import type { EstadoCaso } from '@/types/enums'
+import { esErrorApi } from '@/services/apiClient'
+import { ESTADO_CASO_LABEL, TIPO_EVIDENCIA_LABEL, etiqueta } from '@/locales/es'
+import type { EstadoCaso, TipoEvidencia } from '@/types/enums'
 import { tiempoEspera } from '@/utils/fechas'
-import type { CasoResumen, FiltrosCasos } from './types'
+import type { CasoResumen, Evidencia, FiltrosCasos } from './types'
 
 /** Estados en los que un caso todavía se atiende (admite técnico). */
 export const ESTADOS_ACTIVOS: EstadoCaso[] = ['PENDIENTE_REVISION', 'EN_REVISION', 'REGISTRADO']
@@ -49,3 +50,16 @@ export const CLAVES_PANEL: (keyof FiltrosPanel)[] = [
   'desde',
   'hasta',
 ]
+
+/** Tipos de evidencia de la galería y el visor, en el orden del diseño. */
+export const TIPOS_GALERIA: TipoEvidencia[] = ['HOJA', 'ENVES', 'FRUTO', 'TALLO']
+
+/** Texto alternativo de una evidencia: «Evidencia fruto 2 · caso #0241». */
+export function textoAlternativo(e: Evidencia, idCaso: string) {
+  return `Evidencia ${etiqueta(TIPO_EVIDENCIA_LABEL, e.tipo).toLowerCase()} ${e.numero} · caso #${idCaso}`
+}
+
+/** El caso no existe (o se eliminó al vencer su conservación): la API respondió 404. */
+export function esCasoNoEncontrado(error: unknown) {
+  return esErrorApi(error) && error.status === 404
+}

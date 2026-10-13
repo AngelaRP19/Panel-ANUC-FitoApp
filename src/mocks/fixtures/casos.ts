@@ -462,6 +462,7 @@ const VENCIMIENTOS: Record<string, { vence: string; extendida?: boolean }> = {
   '0216': { vence: '2026-10-22 23:59' },
   '0217': { vence: '2026-11-05 23:59' },
   '0219': { vence: '2027-09-09 23:59', extendida: true },
+  '0226': { vence: '2027-03-22 10:05' },
 }
 
 function vencimiento(codigo: string, estado: EstadoCaso, enviado: string | null) {

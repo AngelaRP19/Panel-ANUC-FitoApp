@@ -6,6 +6,11 @@ import {
   contarCasos,
   listarCasos,
   listarTecnicosAsignables,
+  obtenerCaso,
+  obtenerCuestionario,
+  obtenerEvidencias,
+  obtenerExplicacion,
+  obtenerHistorial,
   obtenerOpcionesFiltro,
 } from './api'
 import type { FiltrosCasos } from './types'
@@ -18,6 +23,7 @@ export const casosKeys = {
   filtros: () => [...casosKeys.all, 'filtros'] as const,
   tecnicos: () => ['tecnicos', 'asignables'] as const,
   detail: (id: string) => [...casosKeys.all, 'detail', id] as const,
+  parte: (id: string, parte: string) => [...casosKeys.all, 'detail', id, parte] as const,
 }
 
 export const FILTROS_CASOS_VACIOS: FiltrosCasos = {
@@ -83,5 +89,42 @@ export function useAsignarTecnico() {
       void queryClient.invalidateQueries({ queryKey: ['navegacion'] })
       void queryClient.invalidateQueries({ queryKey: ['inicio'] })
     },
+  })
+}
+
+export function useCaso(id: string) {
+  return useQuery({ queryKey: casosKeys.detail(id), queryFn: () => obtenerCaso(id) })
+}
+
+/** Evidencias: solo cuando se necesitan (visor). `refetch` renueva URLs vencidas. */
+export function useEvidencias(id: string, { enabled = true }: { enabled?: boolean } = {}) {
+  return useQuery({
+    queryKey: casosKeys.parte(id, 'evidencias'),
+    queryFn: () => obtenerEvidencias(id),
+    enabled,
+  })
+}
+
+export function useCuestionario(id: string, { enabled = true }: { enabled?: boolean } = {}) {
+  return useQuery({
+    queryKey: casosKeys.parte(id, 'cuestionario'),
+    queryFn: () => obtenerCuestionario(id),
+    enabled,
+  })
+}
+
+export function useHistorial(id: string, { enabled = true }: { enabled?: boolean } = {}) {
+  return useQuery({
+    queryKey: casosKeys.parte(id, 'historial'),
+    queryFn: () => obtenerHistorial(id),
+    enabled,
+  })
+}
+
+export function useExplicacion(id: string, { enabled = true }: { enabled?: boolean } = {}) {
+  return useQuery({
+    queryKey: casosKeys.parte(id, 'explicacion'),
+    queryFn: () => obtenerExplicacion(id),
+    enabled,
   })
 }

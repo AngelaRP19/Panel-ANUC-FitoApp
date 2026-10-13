@@ -1,6 +1,13 @@
 import { http, HttpResponse } from 'msw'
 import type { EstadoCaso } from '@/types/enums'
 import { casos, type CasoFixture } from '../fixtures/casos'
+import {
+  cuestionarioDe,
+  detalleDe,
+  evidenciasDe,
+  explicacionDe,
+  historialDe,
+} from '../fixtures/detalle'
 import { usuarios, type UsuarioFixture } from '../fixtures/usuarios'
 import { API, errorApi, noAutenticado, usuarioActual } from './comun'
 
@@ -16,6 +23,14 @@ const diaBogota = (iso: string) =>
 /** El técnico solo ve sus casos asignados; el líder, todos. */
 function visibles(u: UsuarioFixture): CasoFixture[] {
   return u.rol === 'LIDER_TECNICO' ? casos : casos.filter((c) => c.tecnico?.id === u.id)
+}
+
+/** Caso que el usuario puede ver, o la respuesta de error (401 / 404). */
+function casoVisible(request: Request, id: string): CasoFixture | Response {
+  const u = usuarioActual(request)
+  if (!u) return noAutenticado()
+  const caso = visibles(u).find((c) => c.id === id)
+  return caso ?? errorApi(404, 'CASO_NO_ENCONTRADO', 'El caso no existe.')
 }
 
 /** Aplica los filtros de la bandeja (todos menos el de estado). */
@@ -136,14 +151,31 @@ export const casosHandlers = [
     })
   }),
 
-  // Detalle de un caso. Al técnico solo le responde sus casos asignados: el resto da 404
-  // para no revelar que existe (guía 6.4). La ficha completa llega con la pantalla 6.
+  // Detalle de un caso y sus partes. Al técnico solo le responde sus casos asignados: el resto
+  // da 404 para no revelar que existe (guía 6.4).
   http.get(`${API}/casos/:id`, ({ request, params }) => {
-    const u = usuarioActual(request)
-    if (!u) return noAutenticado()
-    const caso = visibles(u).find((c) => c.id === params.id)
-    if (!caso) return errorApi(404, 'CASO_NO_ENCONTRADO', 'El caso no existe.')
-    return HttpResponse.json(caso)
+    const r = casoVisible(request, String(params.id))
+    return r instanceof Response ? r : HttpResponse.json(detalleDe(r))
+  }),
+  http.get(`${API}/casos/:id/evidencias`, ({ request, params }) => {
+    const r = casoVisible(request, String(params.id))
+    return r instanceof Response ? r : HttpResponse.json(evidenciasDe(r))
+  }),
+  http.get(`${API}/casos/:id/cuestionario`, ({ request, params }) => {
+    const r = casoVisible(request, String(params.id))
+    return r instanceof Response ? r : HttpResponse.json(cuestionarioDe(r))
+  }),
+  http.get(`${API}/casos/:id/historial`, ({ request, params }) => {
+    const r = casoVisible(request, String(params.id))
+    return r instanceof Response ? r : HttpResponse.json(historialDe(r))
+  }),
+  http.get(`${API}/casos/:id/explicacion`, ({ request, params }) => {
+    const r = casoVisible(request, String(params.id))
+    if (r instanceof Response) return r
+    const explicacion = explicacionDe(r)
+    return explicacion
+      ? HttpResponse.json(explicacion)
+      : errorApi(404, 'SIN_ANALISIS', 'El chatbot aún no termina el análisis.')
   }),
 
   // Asignar o reasignar el técnico (solo líder). Pendiente de revisión → En revisión.

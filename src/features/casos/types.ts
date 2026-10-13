@@ -1,6 +1,15 @@
 // Tipos del feature "casos" (contrato propuesto en la guía, pantalla 5).
 // TODO: reemplazar por los de '@/types/api' cuando exista el OpenAPI del backend.
-import type { Categoria, EstadoCaso, Especie, ResultadoAnalisis, Rol, Vereda } from '@/types/enums'
+import type {
+  Categoria,
+  EstadoCaso,
+  Especie,
+  ResultadoAnalisis,
+  Rol,
+  TipoCultivo,
+  TipoEvidencia,
+  Vereda,
+} from '@/types/enums'
 
 /** Fila de la bandeja (GET /casos). */
 export interface CasoResumen {
@@ -73,4 +82,85 @@ export interface TecnicoAsignable {
   /** Casos activos: en revisión y registrados sin cerrar. */
   activos: number
   en_revision: number
+}
+
+/** Detalle consolidado de un caso (GET /casos/{id}). */
+export interface CasoDetalle extends Omit<CasoResumen, 'productor' | 'finca' | 'cultivo'> {
+  productor: { id: string; nombre: string; celular: string; casos_ultimo_anio: number }
+  finca: {
+    id: string
+    nombre: string
+    vereda: Vereda | string
+    latitud: number | null
+    longitud: number | null
+  }
+  cultivo: {
+    id: string
+    nombre: string
+    tipo: TipoCultivo | string
+    especies: (Especie | string)[]
+  }
+  /** «fruto y hojas» */
+  zona_afectada: string
+  /** Texto que acompaña al resultado preliminar. */
+  preliminar_resumen: string | null
+  /** Resultado ambiguo: en qué coincide cada categoría. */
+  preliminar_coincidencias: { categoria: Categoria; texto: string }[]
+  /** Pista para el técnico (cómo distinguir o verificar). */
+  preliminar_pista: string | null
+  cerrado_en: string | null
+  evidencias_resumen: {
+    total: number
+    /** Máximo de evidencias útiles que pide el chatbot (12). */
+    maximo: number
+    por_tipo: Partial<Record<TipoEvidencia, number>>
+  }
+  cuestionario_resumen: { respuestas: number; desde: string | null; hasta: string | null }
+  historial_ultimo: { titulo: string; en: string } | null
+}
+
+/** Foto de evidencia (GET /casos/{id}/evidencias). La URL es prefirmada y vence. */
+export interface Evidencia {
+  id: string
+  tipo: TipoEvidencia
+  /** Número dentro de su tipo (Fruto 2). */
+  numero: number
+  descripcion: string
+  url: string | null
+  recibida_en: string
+  pregunta: string
+}
+
+export interface Cuestionario {
+  desde: string | null
+  hasta: string | null
+  respuestas: { pregunta: string; respuesta: string }[]
+}
+
+export type TipoEventoHistorial =
+  | 'CREADO'
+  | 'ANALISIS'
+  | 'ENVIADO'
+  | 'ASIGNADO'
+  | 'DIAGNOSTICO'
+  | 'CIERRE'
+  | 'EXTENSION'
+  | 'DESCARTE'
+
+/** Paso del historial (GET /casos/{id}/historial). Los pasos futuros llegan con `pendiente`. */
+export interface EventoHistorial {
+  tipo: TipoEventoHistorial | string
+  titulo: string
+  en: string | null
+  detalle: string
+  pendiente: boolean
+}
+
+/** Explicación del resultado preliminar (GET /casos/{id}/explicacion). */
+export interface Explicacion {
+  coincide: string[]
+  descarta: { categoria: Categoria; texto: string }[]
+  /** Categorías por debajo del mínimo para sugerirse, o las más cercanas si no se identificó. */
+  cercanas: { categoria: Categoria; porcentaje: number }[]
+  texto: string | null
 }
