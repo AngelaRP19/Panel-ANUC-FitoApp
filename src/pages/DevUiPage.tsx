@@ -134,7 +134,7 @@ export default function DevUiPage() {
   const [chip, setChip] = useState(true)
   const [pagina, setPagina] = useState(1)
   const [tabla, setTabla] = useState<'datos' | 'cargando' | 'vacio' | 'error'>('datos')
-  const [seleccion, setSeleccion] = useState<string | null>('c-0239')
+  const [seleccion, setSeleccion] = useState<string | null>('0239')
   const filasPagina = casos.slice((pagina - 1) * 5, pagina * 5)
 
   return (

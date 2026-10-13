@@ -4,8 +4,11 @@ import type { RouteHandle } from '@/components/layout/AppLayout'
 import { Spinner } from '@/components/ui/Spinner'
 import EnConstruccionPage from '@/pages/EnConstruccionPage'
 import LoginPage from '@/pages/LoginPage'
+import MiCuentaPage from '@/pages/MiCuentaPage'
 import NotFoundPage from '@/pages/NotFoundPage'
 import PrimerUsoPage from '@/pages/PrimerUsoPage'
+import RecuperarCuentaPage from '@/pages/RecuperarCuentaPage'
+import SinAccesoPage from '@/pages/SinAccesoPage'
 import { Rol } from '@/types/enums'
 import { IndexRedirect } from './IndexRedirect'
 import { InicioPorRol } from './InicioPorRol'
@@ -45,14 +48,15 @@ function conSuspense(elemento: ReactNode) {
 
 const LIDER = [Rol.LIDER_TECNICO]
 
-export const router = createBrowserRouter([
+/** Árbol de rutas (se exporta para probarlo con un router en memoria). */
+export const rutas: RouteObject[] = [
   // Públicas: con sesión iniciada redirigen al panel
   {
     element: <PublicOnlyRoute />,
     children: [
       { path: PATHS.login, element: <LoginPage /> },
       { path: PATHS.primerUso, element: <PrimerUsoPage /> },
-      pendiente(PATHS.recuperarCuenta, 'Recuperar cuenta', 3),
+      { path: PATHS.recuperarCuenta, element: <RecuperarCuentaPage /> },
     ],
   },
   {
@@ -68,12 +72,13 @@ export const router = createBrowserRouter([
           pendiente(PATHS.casos, 'Casos', 5),
           pendiente('/casos/:id', 'Detalle del caso', 6),
           pendiente(PATHS.alertas, 'Alertas epidemiológicas', 11),
-          pendiente(PATHS.miCuenta, 'Mi cuenta', 15),
-          pendiente(PATHS.sinAcceso, 'Sin acceso', 4),
+          { path: PATHS.miCuenta, element: <MiCuentaPage />, handle: titulo('Mi cuenta') },
+          { path: PATHS.sinAcceso, element: <SinAccesoPage />, handle: titulo('Mis casos') },
 
           // Solo técnico
           {
-            element: <RoleRoute roles={[Rol.TECNICO]} />,
+            // El líder consulta y edita productores y fincas en su propia sección.
+            element: <RoleRoute roles={[Rol.TECNICO]} redirigirA={PATHS.productores} />,
             children: [pendiente(PATHS.consulta, 'Productores y fincas', 14)],
           },
 
@@ -97,4 +102,6 @@ export const router = createBrowserRouter([
   },
   ...(DevUiPage ? [{ path: PATHS.devUi, element: conSuspense(<DevUiPage />) }] : []),
   { path: '*', element: <NotFoundPage /> },
-])
+]
+
+export const router = createBrowserRouter(rutas)

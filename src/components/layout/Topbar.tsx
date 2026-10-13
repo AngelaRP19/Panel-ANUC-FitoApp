@@ -1,37 +1,32 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router'
-import * as Dropdown from '@radix-ui/react-dropdown-menu'
 import * as Popover from '@radix-ui/react-dialog'
-import { Bell, ChevronDown, LogOut, Menu, Search, UserRound } from 'lucide-react'
+import { Bell, ChevronDown, Menu, Search } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
+import { ROL_LABEL, etiqueta } from '@/locales/es'
 import { PATHS } from '@/routes/paths'
 import { Rol } from '@/types/enums'
+import { iniciales } from '@/utils/texto'
 
 interface TopbarProps {
   titulo: string
   onMenu: () => void
-  onLogout: () => void
   /** Notificaciones nuevas (contador de la campana). */
   notificacionesNuevas?: number
 }
 
-function iniciales(nombre: string) {
-  return nombre
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((p) => p[0]!.toUpperCase())
-    .join('')
-}
-
-/** Barra superior (pf-top): título, búsqueda por rol, campana y chip de usuario. */
-export function Topbar({ titulo, onMenu, onLogout, notificacionesNuevas = 0 }: TopbarProps) {
+/**
+ * Barra superior (pf-top, componente «Barra superior»): título de la sección, búsqueda según
+ * el rol, campana con contador y chip de usuario que lleva a Mi cuenta.
+ */
+export function Topbar({ titulo, onMenu, notificacionesNuevas = 0 }: TopbarProps) {
   const { usuario } = useAuth()
   const navigate = useNavigate()
   const [busqueda, setBusqueda] = useState('')
 
   if (!usuario) return null
   const esLider = usuario.rol === Rol.LIDER_TECNICO
+  // El técnico solo busca en sus casos asignados (el backend filtra por asignación).
   const placeholder = esLider ? 'Buscar caso, productor o finca' : 'Buscar en mis casos'
 
   const buscar = (e: FormEvent) => {
@@ -71,7 +66,7 @@ export function Topbar({ titulo, onMenu, onLogout, notificacionesNuevas = 0 }: T
         />
       </form>
 
-      {/* TODO(pantalla 18): lista de notificaciones. Por ahora solo el contador. */}
+      {/* TODO(pantalla 18): lista de notificaciones. Por ahora el contador y el panel vacío. */}
       <Popover.Root modal={false}>
         <Popover.Trigger
           aria-label={`Notificaciones: ${notificacionesNuevas} nuevas`}
@@ -98,53 +93,37 @@ export function Topbar({ titulo, onMenu, onLogout, notificacionesNuevas = 0 }: T
               </Popover.Title>
             </div>
             <p className="px-4 py-6 text-center text-cuerpo-sm text-tinta-terciaria">
-              No tienes notificaciones nuevas.
+              Las notificaciones estarán disponibles pronto.
             </p>
+            <div className="flex justify-between border-t border-borde px-4 py-2.5 text-cuerpo-sm">
+              <Link to={PATHS.miCuenta} className="enlace">
+                Configurar notificaciones
+              </Link>
+              <span className="text-tinta-terciaria">Últimos 7 días</span>
+            </div>
           </Popover.Content>
         </Popover.Portal>
       </Popover.Root>
 
-      {/* TODO(pantalla 4): el diseño lleva el chip directo a Mi cuenta; «Cerrar sesión» vive allí. */}
-      <Dropdown.Root>
-        <Dropdown.Trigger className="flex cursor-pointer items-center gap-3 rounded-md py-1 pr-2 pl-1 text-left hover:bg-verde-50">
-          <span
-            aria-hidden="true"
-            className="size-9 flex-none rounded-full bg-verde-100 text-center font-titulos text-sm leading-9 font-bold text-verde-800"
-          >
-            {iniciales(usuario.nombre)}
+      <Link
+        to={PATHS.miCuenta}
+        aria-label={`Mi cuenta: ${usuario.nombre}, ${etiqueta(ROL_LABEL, usuario.rol)}`}
+        className="flex items-center gap-3 rounded-md py-1 pr-2 pl-1 text-left text-tinta no-underline hover:bg-verde-50"
+      >
+        <span
+          aria-hidden="true"
+          className="size-9 flex-none rounded-full bg-verde-100 text-center font-titulos text-sm leading-9 font-bold text-verde-800"
+        >
+          {iniciales(usuario.nombre)}
+        </span>
+        <span className="hidden flex-col sm:flex">
+          <span className="text-cuerpo-sm leading-[18px] font-semibold">{usuario.nombre}</span>
+          <span className="text-xs leading-4 text-tinta-terciaria">
+            {etiqueta(ROL_LABEL, usuario.rol)}
           </span>
-          <span className="hidden flex-col sm:flex">
-            <span className="text-cuerpo-sm leading-[18px] font-semibold">{usuario.nombre}</span>
-            <span className="text-xs leading-4 text-tinta-terciaria">
-              {esLider ? 'Líder técnico' : 'Técnico'}
-            </span>
-          </span>
-          <span className="sr-only sm:hidden">{usuario.nombre}</span>
-          <ChevronDown size={16} aria-hidden="true" className="text-tinta-terciaria" />
-        </Dropdown.Trigger>
-        <Dropdown.Portal>
-          <Dropdown.Content
-            align="end"
-            sideOffset={8}
-            className="z-40 min-w-56 rounded-md border border-borde bg-blanco p-1.5 shadow-2"
-          >
-            <Dropdown.Item asChild>
-              <Link
-                to={PATHS.miCuenta}
-                className="flex h-9 cursor-pointer items-center gap-2 rounded-sm px-2.5 text-cuerpo-sm font-medium text-tinta no-underline outline-none data-[highlighted]:bg-verde-50"
-              >
-                <UserRound size={16} aria-hidden="true" /> Mi cuenta
-              </Link>
-            </Dropdown.Item>
-            <Dropdown.Item
-              onSelect={onLogout}
-              className="flex h-9 cursor-pointer items-center gap-2 rounded-sm px-2.5 text-cuerpo-sm font-medium text-tinta outline-none data-[highlighted]:bg-verde-50"
-            >
-              <LogOut size={16} aria-hidden="true" /> Cerrar sesión
-            </Dropdown.Item>
-          </Dropdown.Content>
-        </Dropdown.Portal>
-      </Dropdown.Root>
+        </span>
+        <ChevronDown size={16} aria-hidden="true" className="text-tinta-terciaria" />
+      </Link>
     </header>
   )
 }

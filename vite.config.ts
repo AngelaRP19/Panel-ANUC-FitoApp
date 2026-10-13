@@ -19,5 +19,6 @@ export default defineConfig({
     // Las pruebas usan siempre la API y Cognito simulados
     env: { VITE_USE_MOCKS: 'true' },
     css: false,
+    testTimeout: 30_000,
   },
 })

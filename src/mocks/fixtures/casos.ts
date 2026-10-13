@@ -3,6 +3,7 @@
 import type { Categoria, EstadoCaso, Especie, ResultadoAnalisis, Vereda } from '@/types/enums'
 
 export interface CasoFixture {
+  /** Supuesto: el id del caso en la API es su código de 4 dígitos (`/casos/0241`). */
   id: string
   /** «0241» (se muestra como «#0241») */
   codigo: string
@@ -449,7 +450,7 @@ function preliminar(categoria: CategoriaDiseno, porcentaje: number): CasoFixture
 
 export const casos: CasoFixture[] = FILAS.map(
   ([codigo, prod, finca, cultivo, especie, cat, pct, estado, tec, enviado]) => ({
-    id: `c-${codigo}`,
+    id: codigo,
     codigo,
     estado,
     productor: { id: `p-${slug(prod)}`, ...PRODUCTORES[prod]! },

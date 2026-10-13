@@ -16,18 +16,12 @@ export interface RouteHandle {
 interface AppLayoutProps {
   badges?: NavBadges
   notificacionesNuevas?: number
-  onLogout: () => void
   /** Reintento periódico mientras no hay conexión (p. ej. refrescar las consultas). */
   onReintentar?: () => void
 }
 
 /** Layout del panel: barra lateral de 256 px + barra superior de 64 px + contenido. */
-export function AppLayout({
-  badges,
-  notificacionesNuevas,
-  onLogout,
-  onReintentar,
-}: AppLayoutProps) {
+export function AppLayout({ badges, notificacionesNuevas, onReintentar }: AppLayoutProps) {
   const [menuAbierto, setMenuAbierto] = useState(false)
   const matches = useMatches()
   const titulo =
@@ -70,7 +64,6 @@ export function AppLayout({
         <Topbar
           titulo={titulo}
           onMenu={() => setMenuAbierto(true)}
-          onLogout={onLogout}
           notificacionesNuevas={notificacionesNuevas}
         />
         <OfflineBanner onRetry={onReintentar} />

@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router'
 import { useAuth } from '@/context/AuthContext'
 import { PATHS } from '@/routes/paths'
+import { confirmarRecuperacion, solicitarCodigo } from '@/services/auth'
 import { crearPrimerLider, obtenerEstadoAuth, type DatosPrimerLider } from './api'
 import type { LoginValues } from './schemas'
 
@@ -41,6 +42,19 @@ export function useCrearPrimerLider() {
       return iniciarSesion(datos.correo, datos.password)
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: authKeys.estado() }),
+  })
+}
+
+/** Recuperar cuenta, paso 1: envía el código de verificación al correo (RQF06). */
+export function useSolicitarCodigo() {
+  return useMutation({ mutationFn: (correo: string) => solicitarCodigo(correo) })
+}
+
+/** Recuperar cuenta, paso 2: valida el código y fija la nueva contraseña. */
+export function useConfirmarRecuperacion() {
+  return useMutation({
+    mutationFn: ({ correo, codigo, nueva }: { correo: string; codigo: string; nueva: string }) =>
+      confirmarRecuperacion(correo, codigo, nueva),
   })
 }
 

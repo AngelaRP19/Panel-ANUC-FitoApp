@@ -13,6 +13,7 @@ const MAX_INTENTOS = 5
 const POLITICA = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/
 
 let intentosFallidos = 0
+let codigosFallidos = 0
 let pendienteNuevaContrasena: UsuarioFixture | null = null
 let sesionEnMemoria: string | null = null
 
@@ -37,7 +38,9 @@ const almacen = {
   },
 }
 
-const esperar = () => new Promise((r) => setTimeout(r, 300))
+// Latencia simulada para ver los estados de carga en desarrollo (en pruebas, sin espera).
+const LATENCIA_MS = import.meta.env.MODE === 'test' ? 0 : 300
+const esperar = () => new Promise((r) => setTimeout(r, LATENCIA_MS))
 const buscar = (correo: string) =>
   usuarios.find((u) => u.correo.toLowerCase() === correo.trim().toLowerCase())
 
@@ -51,6 +54,7 @@ export function usuarioDelToken(token: string | null | undefined): UsuarioFixtur
 /** Reinicia el estado del simulador (pruebas). */
 export function reiniciarAuthSimulada() {
   intentosFallidos = 0
+  codigosFallidos = 0
   pendienteNuevaContrasena = null
   almacen.guardar(null)
 }
@@ -104,7 +108,12 @@ export const adaptadorSimulado: AdaptadorAuth = {
     await esperar()
     const u = buscar(correo)
     if (!u) throw new ErrorAuth('CUENTA_INEXISTENTE')
-    if (codigo !== CODIGO_RECUPERACION_DEMO) throw new ErrorAuth('CODIGO_INVALIDO')
+    if (codigosFallidos >= MAX_INTENTOS) throw new ErrorAuth('DEMASIADOS_INTENTOS')
+    if (codigo !== CODIGO_RECUPERACION_DEMO) {
+      codigosFallidos++
+      throw new ErrorAuth('CODIGO_INVALIDO')
+    }
+    codigosFallidos = 0
     if (!POLITICA.test(nueva)) throw new ErrorAuth('CONTRASENA_INVALIDA')
     u.contrasena = nueva
     u.contrasenaTemporal = false

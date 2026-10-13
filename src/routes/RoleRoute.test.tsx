@@ -28,9 +28,12 @@ describe('RoleRoute', () => {
     expect(screen.getByText('productores')).toBeInTheDocument()
   })
 
-  it('redirige al técnico a /casos', () => {
+  it('muestra al técnico que la sección es solo para el líder', () => {
     useAuthMock.mockReturnValue({ usuario: { rol: Rol.TECNICO } })
     renderEn('/productores')
-    expect(screen.getByText('casos')).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: 'Esta sección es solo para el líder técnico' }),
+    ).toBeInTheDocument()
+    expect(screen.queryByText('productores')).not.toBeInTheDocument()
   })
 })
