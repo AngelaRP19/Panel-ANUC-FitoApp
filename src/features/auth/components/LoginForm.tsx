@@ -1,48 +1,77 @@
-import { useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { Link } from 'react-router'
 import { zodResolver } from '@hookform/resolvers/zod'
-import axios from 'axios'
-import { Alert } from '@/components/ui/Alert'
+import { Aviso, type TonoAviso } from '@/components/ui/Aviso'
 import { Button } from '@/components/ui/Button'
 import { fieldDescriptionId, FormField, RequiredLegend } from '@/components/ui/FormField'
 import { Input } from '@/components/ui/Input'
+import { PasswordInput } from '@/components/ui/PasswordInput'
+import { MENSAJES } from '@/locales/es'
+import { PATHS } from '@/routes/paths'
+import { esErrorAuth } from '@/services/auth'
 import { useLogin } from '../hooks'
 import { loginSchema, type LoginValues } from '../schemas'
+import { TarjetaAcceso } from './PanelMarca'
+
+/** Aviso informativo sobre el formulario (sesión expirada, contraseña actualizada). */
+export interface AvisoLogin {
+  tono: TonoAviso
+  titulo: string
+  texto?: string
+}
 
 interface LoginFormProps {
-  onSuccess: () => void
+  /** Aviso que trae la ruta (`?expirada=1`, vuelta de recuperar cuenta). */
+  aviso?: AvisoLogin | null
+  /** Correo ya escrito (al volver de recuperar la cuenta). */
+  correoInicial?: string
+  /** Cognito pidió cambiar la contraseña temporal (RQF11). */
+  onNuevaContrasena: () => void
+  /** Entró al panel. Las rutas públicas redirigen solas; útil para pruebas. */
+  onSuccess?: () => void
 }
 
-function mensajeDeError(error: unknown): string {
-  const status = axios.isAxiosError(error) ? error.response?.status : undefined
-  // Mensaje genérico: no se revela qué dato falló (RQNF03)
-  if (status === 401 || status === 403)
-    return 'El correo o la contraseña no son correctos. Revisa los datos e intenta de nuevo.'
-  if (status === 429) return 'Demasiados intentos. Espera un momento antes de volver a intentarlo.'
-  return 'No fue posible conectar con el servidor. Intenta de nuevo en unos minutos.'
+/** Error de inicio de sesión. Credenciales incorrectas y cuenta deshabilitada dan el mismo (RQF02). */
+function errorDeInicio(error: unknown): { titulo: string; texto: string } {
+  const codigo = esErrorAuth(error) ? error.codigo : 'DESCONOCIDO'
+  if (codigo === 'CREDENCIALES') {
+    return { titulo: 'No pudimos iniciar sesión.', texto: MENSAJES.credencialesIncorrectas }
+  }
+  if (codigo === 'DEMASIADOS_INTENTOS') {
+    return {
+      titulo: 'Demasiados intentos.',
+      texto: 'Espera unos minutos e inténtalo de nuevo.',
+    }
+  }
+  return { titulo: 'No pudimos iniciar sesión.', texto: MENSAJES.errorConexionTexto }
 }
 
-export function LoginForm({ onSuccess }: LoginFormProps) {
-  const [mostrarPassword, setMostrarPassword] = useState(false)
-  const loginMutation = useLogin()
+/** Formulario «Inicia sesión» (artboard 01). Los valores se conservan ante un error. */
+export function LoginForm({
+  aviso,
+  correoInicial = '',
+  onNuevaContrasena,
+  onSuccess,
+}: LoginFormProps) {
+  const login = useLogin()
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { correo: '', password: '' },
+    defaultValues: { correo: correoInicial, password: '' },
   })
 
-  const onSubmit = handleSubmit((values) => loginMutation.mutate(values, { onSuccess }))
+  const onSubmit = handleSubmit((values) =>
+    login.mutate(values, {
+      onSuccess: (r) => (r.paso === 'NUEVA_CONTRASENA' ? onNuevaContrasena() : onSuccess?.()),
+    }),
+  )
+  const error = login.isError ? errorDeInicio(login.error) : null
 
   return (
-    <form
-      noValidate
-      onSubmit={onSubmit}
-      aria-labelledby="t-login"
-      className="flex w-full max-w-110 flex-col gap-5 rounded-lg border border-borde bg-blanco p-6 shadow-1 sm:p-10"
-    >
+    <TarjetaAcceso labelledBy="t-login" onSubmit={onSubmit}>
       <div>
         <h1 id="t-login" className="titulo-display">
           Inicia sesión
@@ -50,10 +79,16 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
         <p className="mt-1.5 text-tinta-secundaria">Ingresa con tu correo y contraseña.</p>
       </div>
 
-      {loginMutation.isError && (
-        <Alert tone="danger" title="No pudimos iniciar sesión.">
-          {mensajeDeError(loginMutation.error)}
-        </Alert>
+      {error ? (
+        <Aviso tono="peligro" titulo={error.titulo}>
+          {error.texto}
+        </Aviso>
+      ) : (
+        aviso && (
+          <Aviso tono={aviso.tono} titulo={aviso.titulo} rol="status">
+            {aviso.texto}
+          </Aviso>
+        )
       )}
 
       <RequiredLegend />
@@ -63,7 +98,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
         htmlFor="l-mail"
         required
         error={errors.correo?.message}
-        hint="Formato nombre@dominio"
+        hint={MENSAJES.ayudaCorreo}
       >
         <Input
           id="l-mail"
@@ -76,36 +111,26 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
       </FormField>
 
       <FormField label="Contraseña" htmlFor="l-pass" required error={errors.password?.message}>
-        <div className="relative">
-          <Input
-            id="l-pass"
-            type={mostrarPassword ? 'text' : 'password'}
-            autoComplete="current-password"
-            invalid={!!errors.password}
-            aria-describedby={errors.password ? fieldDescriptionId('l-pass') : undefined}
-            className="pr-22"
-            {...register('password')}
-          />
-          <Button
-            variant="text"
-            size="sm"
-            className="absolute top-1 right-1"
-            aria-pressed={mostrarPassword}
-            aria-label={mostrarPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-            onClick={() => setMostrarPassword((v) => !v)}
-          >
-            {mostrarPassword ? 'Ocultar' : 'Mostrar'}
-          </Button>
-        </div>
+        <PasswordInput
+          id="l-pass"
+          autoComplete="current-password"
+          autoFocus={!!correoInicial}
+          invalid={!!errors.password}
+          aria-describedby={errors.password ? fieldDescriptionId('l-pass') : undefined}
+          {...register('password')}
+        />
       </FormField>
 
-      <Button type="submit" size="lg" loading={loginMutation.isPending}>
+      <Button type="submit" size="lg" loading={login.isPending}>
         Ingresar
       </Button>
 
       <p className="text-center text-cuerpo-sm text-tinta-terciaria">
-        ¿Olvidaste tu contraseña? Pide al líder técnico que la restablezca.
+        ¿Olvidaste tu contraseña?{' '}
+        <Link to={PATHS.recuperarCuenta} className="enlace">
+          Recupérala
+        </Link>
       </p>
-    </form>
+    </TarjetaAcceso>
   )
 }

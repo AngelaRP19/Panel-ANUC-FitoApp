@@ -1,14 +1,34 @@
 import { Loader2 } from 'lucide-react'
 import { cn } from '@/utils/cn'
 
-export function Spinner({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
+interface SpinnerProps {
+  size?: 'sm' | 'md' | 'lg'
+  /** Texto que anuncia el lector de pantalla («Cargando casos»). */
+  etiqueta?: string
+  /** Dentro de un botón que ya anuncia la carga: no se anuncia aparte. */
+  decorativo?: boolean
+  className?: string
+}
+
+export function Spinner({
+  size = 'md',
+  etiqueta = 'Cargando',
+  decorativo = false,
+  className,
+}: SpinnerProps) {
   const px = { sm: 16, md: 24, lg: 36 }[size]
-  return (
+  const icono = (
     <Loader2
       size={px}
-      role="status"
-      aria-label="Cargando"
-      className={cn('animate-spin text-verde-700')}
+      aria-hidden="true"
+      className={cn('animate-spin text-current motion-reduce:animate-none', className)}
     />
+  )
+  if (decorativo) return icono
+  return (
+    <span role="status" className="inline-flex text-verde-700">
+      {icono}
+      <span className="sr-only">{etiqueta}</span>
+    </span>
   )
 }

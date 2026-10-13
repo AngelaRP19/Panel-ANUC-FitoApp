@@ -16,6 +16,8 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./src/test/setup.ts'],
+    // Las pruebas usan siempre la API y Cognito simulados
+    env: { VITE_USE_MOCKS: 'true' },
     css: false,
   },
 })
