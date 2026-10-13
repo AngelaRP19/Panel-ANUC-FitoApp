@@ -86,6 +86,7 @@ export const adaptadorSimulado: AdaptadorAuth = {
   },
 
   async cerrarSesion() {
+    pendienteNuevaContrasena = null
     almacen.guardar(null)
   },
 

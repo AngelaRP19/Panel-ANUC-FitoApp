@@ -24,6 +24,12 @@ export function useLogin() {
   })
 }
 
+/** Completa el reto de contraseña temporal (RQF11) y entra al panel. */
+export function useConfirmarNuevaContrasena() {
+  const { confirmarNuevaContrasena } = useAuth()
+  return useMutation({ mutationFn: (nueva: string) => confirmarNuevaContrasena(nueva) })
+}
+
 /** Cierra la sesión (si el proveedor falla, igual se limpia la sesión local). */
 export function useLogout() {
   const { cerrarSesion } = useAuth()
