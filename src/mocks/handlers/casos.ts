@@ -1,9 +1,10 @@
 import { http, HttpResponse } from 'msw'
-import type { EstadoCaso } from '@/types/enums'
+import type { Categoria, EstadoCaso, ResultadoTecnico } from '@/types/enums'
 import { casos, type CasoFixture } from '../fixtures/casos'
 import {
   cuestionarioDe,
   detalleDe,
+  diagnosticoDe,
   evidenciasDe,
   explicacionDe,
   historialDe,
@@ -176,6 +177,79 @@ export const casosHandlers = [
     return explicacion
       ? HttpResponse.json(explicacion)
       : errorApi(404, 'SIN_ANALISIS', 'El chatbot aún no termina el análisis.')
+  }),
+
+  // Guardar el diagnóstico técnico (RQF22): el caso pasa a Registrado.
+  // Lo hace el técnico asignado o el líder (que puede diagnosticar un pendiente eligiendo
+  // el técnico responsable). Se puede volver a guardar mientras el caso no esté cerrado.
+  http.post(`${API}/casos/:id/diagnostico`, async ({ request, params }) => {
+    const u = usuarioActual(request)
+    if (!u) return noAutenticado()
+    const caso = visibles(u).find((c) => c.id === params.id)
+    if (!caso) return errorApi(404, 'CASO_NO_ENCONTRADO', 'El caso no existe.')
+    const esLider = u.rol === 'LIDER_TECNICO'
+    const permitidos: EstadoCaso[] = esLider ? ACTIVOS : ['EN_REVISION', 'REGISTRADO']
+    if (!permitidos.includes(caso.estado)) {
+      return errorApi(409, 'ESTADO_INVALIDO', 'Este caso ya no admite diagnóstico.')
+    }
+    const b = (await request.json()) as {
+      resultado_tecnico?: ResultadoTecnico
+      categoria_determinada?: Categoria | null
+      motivo_visita?: string | null
+      descripcion?: string
+      observaciones?: string
+      tecnico_responsable_id?: string | null
+    }
+    const campos: Record<string, string> = {}
+    if (!b.resultado_tecnico) campos.resultado_tecnico = 'Selecciona un resultado técnico.'
+    if (b.resultado_tecnico === 'OTRA_PATOLOGIA' && !b.categoria_determinada) {
+      campos.categoria_determinada = 'Selecciona la categoría fitosanitaria que determinaste.'
+    }
+    if (b.resultado_tecnico === 'REQUIERE_VISITA' && !b.motivo_visita?.trim()) {
+      campos.motivo_visita = 'Escribe el motivo de la visita.'
+    }
+    const responsableId = esLider ? (b.tecnico_responsable_id ?? caso.tecnico?.id) : u.id
+    const responsable = usuarios.find((x) => x.id === responsableId && x.activo)
+    if (!responsable) campos.tecnico_responsable_id = 'Selecciona el técnico responsable.'
+    if (Object.keys(campos).length > 0) {
+      return errorApi(422, 'VALIDACION', 'Revisa los campos marcados.', campos)
+    }
+    caso.tecnico = { id: responsable!.id, nombre: responsable!.nombre }
+    caso.estado = 'REGISTRADO'
+    caso.diagnostico = {
+      resultado_tecnico: b.resultado_tecnico!,
+      categoria_determinada:
+        b.resultado_tecnico === 'OTRA_PATOLOGIA' ? b.categoria_determinada! : null,
+      motivo_visita: b.resultado_tecnico === 'REQUIERE_VISITA' ? b.motivo_visita!.trim() : null,
+      descripcion: b.descripcion?.trim() ?? '',
+      observaciones: b.observaciones?.trim() ?? '',
+      tecnico_responsable: { id: responsable!.id, nombre: responsable!.nombre },
+      registrado_en: new Date().toISOString(),
+    }
+    return HttpResponse.json(detalleDe(caso))
+  }),
+
+  // Cerrar el caso (RQF23): solo con el diagnóstico guardado. Fija el vencimiento en 6 meses.
+  http.post(`${API}/casos/:id/cierre`, ({ request, params }) => {
+    const u = usuarioActual(request)
+    if (!u) return noAutenticado()
+    const caso = visibles(u).find((c) => c.id === params.id)
+    if (!caso) return errorApi(404, 'CASO_NO_ENCONTRADO', 'El caso no existe.')
+    if (caso.estado !== 'REGISTRADO') {
+      return errorApi(
+        409,
+        'ESTADO_INVALIDO',
+        'Guarda el diagnóstico técnico antes de cerrar el caso.',
+      )
+    }
+    const ahora = new Date()
+    const vence = new Date(ahora)
+    vence.setMonth(vence.getMonth() + 6)
+    caso.diagnostico = diagnosticoDe(caso)
+    caso.estado = 'CERRADO'
+    caso.cerrado_en = ahora.toISOString()
+    caso.vence_en = vence.toISOString()
+    return HttpResponse.json(detalleDe(caso))
   }),
 
   // Asignar o reasignar el técnico (solo líder). Pendiente de revisión → En revisión.

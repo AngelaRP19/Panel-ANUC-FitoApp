@@ -5,6 +5,7 @@ import type {
   EstadoCaso,
   Especie,
   ResultadoAnalisis,
+  ResultadoTecnico,
   Rol,
   TipoCultivo,
   TipoEvidencia,
@@ -117,6 +118,29 @@ export interface CasoDetalle extends Omit<CasoResumen, 'productor' | 'finca' | '
   }
   cuestionario_resumen: { respuestas: number; desde: string | null; hasta: string | null }
   historial_ultimo: { titulo: string; en: string } | null
+  /** Diagnóstico técnico guardado (Registrado o Cerrado). */
+  diagnostico: Diagnostico | null
+}
+
+/** Resultado técnico · decisión humana (POST /casos/{id}/diagnostico). */
+export interface Diagnostico {
+  resultado_tecnico: ResultadoTecnico
+  categoria_determinada: Categoria | null
+  motivo_visita: string | null
+  descripcion: string
+  observaciones: string
+  tecnico_responsable: { id: string; nombre: string }
+  registrado_en: string
+}
+
+export interface DatosDiagnostico {
+  resultado_tecnico: ResultadoTecnico
+  categoria_determinada?: Categoria | null
+  motivo_visita?: string | null
+  descripcion?: string
+  observaciones?: string
+  /** Solo el líder lo elige; el técnico es siempre el responsable de sus casos. */
+  tecnico_responsable_id?: string | null
 }
 
 /** Foto de evidencia (GET /casos/{id}/evidencias). La URL es prefirmada y vence. */

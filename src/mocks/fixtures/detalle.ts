@@ -1,7 +1,7 @@
 // Detalle simulado de los casos (pantalla 6). Los casos #0241, #0239 y #0226 usan los textos de
 // los artboards 04, 04b y 04c; el resto se genera a partir de la bandeja. Datos ficticios (P-16).
 import type { Categoria, TipoEvidencia } from '@/types/enums'
-import { casos, type CasoFixture } from './casos'
+import { casos, type CasoFixture, type DiagnosticoFixture } from './casos'
 
 const MIN = 60_000
 const DIA = 86_400_000
@@ -214,10 +214,52 @@ function zonaDe(c: CasoFixture) {
   return cat ? ZONA[cat] : 'hojas y tallo'
 }
 
-/** Fecha de cierre simulada: 3 días después del envío (#0226: la del artboard 04c). */
+/** Fecha de cierre: la real si se cerró en el panel; si no, 3 días después del envío (#0226: 04c). */
 export function cerradoEn(c: CasoFixture) {
   if (c.estado !== 'CERRADO' || !c.enviado_a_panel_en) return null
+  if (c.cerrado_en) return c.cerrado_en
   return c.id === '0226' ? bogota('2026-09-22 10:05') : mas(c.enviado_a_panel_en, 3 * DIA)
+}
+
+/** Diagnóstico técnico del caso: el guardado en el panel o uno de ejemplo para los registrados y cerrados. */
+export function diagnosticoDe(c: CasoFixture): DiagnosticoFixture | null {
+  if (c.diagnostico !== undefined) return c.diagnostico
+  if (c.estado !== 'REGISTRADO' && c.estado !== 'CERRADO') return null
+  const responsable = c.tecnico ?? { id: 'u-wilmar', nombre: 'Wilmar Torres' }
+  const cierre = cerradoEn(c)
+  const registrado = cierre ? mas(cierre, -7 * MIN) : mas(c.enviado_a_panel_en!, 2 * DIA)
+  if (c.id === '0226') {
+    return {
+      resultado_tecnico: 'NO_IDENTIFICADO',
+      categoria_determinada: null,
+      motivo_visita: null,
+      descripcion:
+        'Con las fotos y respuestas recibidas no se encontró marchitez vascular ni daño en raíz. Se descarta Fusarium. El amarillamiento de hojas bajas no es uniforme.',
+      observaciones:
+        'Se tomó muestra de suelo. Recomendación: revisar el plan de abonado y enviar fotos del fruto en 15 días.',
+      tecnico_responsable: responsable,
+      registrado_en: bogota('2026-09-22 09:58'),
+    }
+  }
+  const categoria = c.preliminar?.categoria ?? null
+  return {
+    resultado_tecnico: categoria ? 'CONFIRMADO' : 'NO_IDENTIFICADO',
+    categoria_determinada: null,
+    motivo_visita: null,
+    descripcion: categoria
+      ? `Las evidencias y el cuestionario coinciden con ${NOMBRE[categoria]}.`
+      : 'Con la información recibida no se puede determinar la categoría.',
+    observaciones: 'Se explicó al productor cómo vigilar el avance en las próximas semanas.',
+    tecnico_responsable: responsable,
+    registrado_en: registrado,
+  }
+}
+
+const TEXTO_RESULTADO: Record<string, string> = {
+  CONFIRMADO: 'Confirmado',
+  OTRA_PATOLOGIA: 'Otra patología',
+  NO_IDENTIFICADO: 'No identificado',
+  REQUIERE_VISITA: 'Requiere visita',
 }
 
 const LIDER = 'Wilmar Torres'
@@ -285,14 +327,13 @@ export function historialDe(c: CasoFixture) {
     })
   }
   const cierre = cerradoEn(c)
-  if (c.estado === 'REGISTRADO' || c.estado === 'CERRADO') {
-    const en = cierre ? mas(cierre, -7 * MIN) : mas(c.enviado_a_panel_en, 2 * DIA)
-    const resultado = c.id === '0226' ? 'No identificado' : 'Confirmado'
+  const diag = diagnosticoDe(c)
+  if (diag) {
     pasos.push({
       tipo: 'DIAGNOSTICO',
-      titulo: `Diagnóstico técnico: ${resultado}`,
-      en,
-      detalle: c.tecnico?.nombre ?? LIDER,
+      titulo: `Diagnóstico técnico: ${TEXTO_RESULTADO[diag.resultado_tecnico]}`,
+      en: diag.registrado_en,
+      detalle: diag.tecnico_responsable.nombre,
       pendiente: false,
     })
   } else {
@@ -426,6 +467,7 @@ export function detalleDe(c: CasoFixture) {
         ? 'Para distinguirlas, revisa las fotos del fruto: en Botrytis el moho gris cubre la lesión; en Roña la lesión es seca, corchosa y sin moho.'
         : null,
     cerrado_en: cerradoEn(c),
+    diagnostico: diagnosticoDe(c),
     evidencias_resumen: { total: ev.length, maximo: 12, por_tipo: porTipo },
     cuestionario_resumen: {
       respuestas: cuest.respuestas.length,

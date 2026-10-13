@@ -1,6 +1,13 @@
 // Casos de la bandeja tomados del diseño (artboard 03). Datos ficticios: solo mocks (P-16).
 // La forma es el contrato propuesto de GET /casos (guía, pantalla 5); se ajusta al llegar el OpenAPI.
-import type { Categoria, EstadoCaso, Especie, ResultadoAnalisis, Vereda } from '@/types/enums'
+import type {
+  Categoria,
+  EstadoCaso,
+  Especie,
+  ResultadoAnalisis,
+  ResultadoTecnico,
+  Vereda,
+} from '@/types/enums'
 
 export interface CasoFixture {
   /** Supuesto: el id del caso en la API es su código de 4 dígitos (`/casos/0241`). */
@@ -27,6 +34,20 @@ export interface CasoFixture {
   vence_en: string | null
   /** El vencimiento se extendió (pantalla 22). */
   conservacion_extendida: boolean
+  /** Diagnóstico guardado en el panel (pantalla 7). Sin definir: se genera para el diseño. */
+  diagnostico?: DiagnosticoFixture | null
+  /** Fecha real de cierre (cuando se cierra desde el panel). */
+  cerrado_en?: string | null
+}
+
+export interface DiagnosticoFixture {
+  resultado_tecnico: ResultadoTecnico
+  categoria_determinada: Categoria | null
+  motivo_visita: string | null
+  descripcion: string
+  observaciones: string
+  tecnico_responsable: { id: string; nombre: string }
+  registrado_en: string
 }
 
 /** «2026-09-28 09:14» en Bogotá (UTC-5) → ISO en UTC. */

@@ -16,4 +16,4 @@ export {
   ReasignarDialog,
 } from './components/VentanasCaso'
 export { Timeline } from './components/Timeline'
-export { FormDiagnostico } from './components/FormDiagnostico'
+export { PanelDiagnostico } from './components/PanelDiagnostico'

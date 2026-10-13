@@ -15,5 +15,6 @@ afterEach(() => {
   reiniciarAuthSimulada()
   fijarEscenario('normal')
   reiniciarCasos()
+  sessionStorage.clear()
 })
 afterAll(() => server.close())

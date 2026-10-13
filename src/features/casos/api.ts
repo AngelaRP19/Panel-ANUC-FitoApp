@@ -2,11 +2,13 @@
 // Endpoints: GET /casos · GET /casos/conteos · GET /casos/filtros · PATCH /casos/{id}/asignacion
 //            GET /tecnicos?activo=true&con_carga=true
 //            GET /casos/{id} · /evidencias · /cuestionario · /historial · /explicacion
+//            POST /casos/{id}/diagnostico · POST /casos/{id}/cierre
 import { api } from '@/services/apiClient'
 import type {
   CasoDetalle,
   CasoResumen,
   Cuestionario,
+  DatosDiagnostico,
   EventoHistorial,
   Evidencia,
   Explicacion,
@@ -97,5 +99,20 @@ export async function obtenerHistorial(id: string): Promise<EventoHistorial[]> {
 
 export async function obtenerExplicacion(id: string): Promise<Explicacion> {
   const { data } = await api.get<Explicacion>(ruta(id, '/explicacion'))
+  return data
+}
+
+/** Guarda el diagnóstico técnico: el caso pasa a Registrado (se puede volver a guardar). */
+export async function registrarDiagnostico(
+  id: string,
+  datos: DatosDiagnostico,
+): Promise<CasoDetalle> {
+  const { data } = await api.post<CasoDetalle>(ruta(id, '/diagnostico'), datos)
+  return data
+}
+
+/** Cierra el caso: pasa a Cerrado y fija el vencimiento de conservación en 6 meses. */
+export async function cerrarCaso(id: string): Promise<CasoDetalle> {
+  const { data } = await api.post<CasoDetalle>(ruta(id, '/cierre'))
   return data
 }

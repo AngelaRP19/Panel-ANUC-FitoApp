@@ -3,6 +3,8 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import { useUrlFilters } from '@/hooks/useUrlFilters'
 import {
   asignarTecnico,
+  cerrarCaso,
+  registrarDiagnostico,
   contarCasos,
   listarCasos,
   listarTecnicosAsignables,
@@ -13,7 +15,7 @@ import {
   obtenerHistorial,
   obtenerOpcionesFiltro,
 } from './api'
-import type { FiltrosCasos } from './types'
+import type { CasoDetalle, DatosDiagnostico, FiltrosCasos } from './types'
 
 export const casosKeys = {
   all: ['casos'] as const,
@@ -127,4 +129,30 @@ export function useExplicacion(id: string, { enabled = true }: { enabled?: boole
     queryFn: () => obtenerExplicacion(id),
     enabled,
   })
+}
+
+/** Tras guardar o cerrar: actualiza el detalle y refresca bandeja, contadores e inicio. */
+function useAlCambiarCaso() {
+  const queryClient = useQueryClient()
+  return (caso: CasoDetalle) => {
+    queryClient.setQueryData(casosKeys.detail(caso.id), caso)
+    void queryClient.invalidateQueries({ queryKey: casosKeys.lists() })
+    void queryClient.invalidateQueries({ queryKey: [...casosKeys.all, 'conteos'] })
+    void queryClient.invalidateQueries({ queryKey: casosKeys.parte(caso.id, 'historial') })
+    void queryClient.invalidateQueries({ queryKey: ['navegacion'] })
+    void queryClient.invalidateQueries({ queryKey: ['inicio'] })
+  }
+}
+
+export function useRegistrarDiagnostico(id: string) {
+  const alCambiar = useAlCambiarCaso()
+  return useMutation({
+    mutationFn: (datos: DatosDiagnostico) => registrarDiagnostico(id, datos),
+    onSuccess: alCambiar,
+  })
+}
+
+export function useCerrarCaso(id: string) {
+  const alCambiar = useAlCambiarCaso()
+  return useMutation({ mutationFn: () => cerrarCaso(id), onSuccess: alCambiar })
 }

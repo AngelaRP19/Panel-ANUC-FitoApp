@@ -1,13 +1,6 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router'
-import {
-  ChevronRight,
-  ClipboardList,
-  Construction,
-  History,
-  MessageCircle,
-  SearchX,
-} from 'lucide-react'
+import { ChevronRight, History, MessageCircle, SearchX } from 'lucide-react'
 import { Breadcrumb } from '@/components/layout/Breadcrumb'
 import { buttonClass } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
@@ -20,6 +13,7 @@ import {
   CuestionarioDialog,
   GaleriaEvidencias,
   HistorialDialog,
+  PanelDiagnostico,
   ProductorFincaDialog,
   ReasignarDialog,
   ResultadoPreliminar,
@@ -66,7 +60,7 @@ function Resumen({
 /**
  * Detalle del caso (diseño 04, 04b, 04c, 04e, 04f, 12c · RQF21, RQF24): lectura del caso,
  * resultado preliminar, evidencias con visor, cuestionario e historial. El diagnóstico técnico
- * llega con la pantalla 7. Un caso de otro técnico lleva a «No tienes acceso a este caso».
+ * y el cierre van en la columna derecha. Un caso de otro técnico lleva a «No tienes acceso a este caso».
  */
 export default function CasoDetallePage() {
   const { id = '' } = useParams()
@@ -169,25 +163,14 @@ export default function CasoDetallePage() {
           </div>
         </div>
 
-        <section
-          aria-labelledby="t-diag"
-          className="rounded-lg border border-verde-300 bg-blanco shadow-1 lg:col-span-5"
-        >
-          <div className="px-6 pt-5">
-            <p className="sobretitulo">Resultado técnico · decisión humana</p>
-            <h2 id="t-diag" className="mt-1 titulo-h2">
-              {caso.estado === 'CERRADO'
-                ? 'Diagnóstico técnico registrado'
-                : 'Registrar diagnóstico técnico'}
-            </h2>
-          </div>
-          {/* TODO(pantalla 7): formulario de diagnóstico, cierre y lectura del caso cerrado. */}
-          <EmptyState
-            icon={caso.estado === 'CERRADO' ? ClipboardList : Construction}
-            title="Disponible en la siguiente entrega"
-            message="El registro del diagnóstico técnico y el cierre del caso llegan con la pantalla 7."
+        <div className="lg:col-span-5">
+          <PanelDiagnostico
+            caso={caso}
+            esLider={esLider}
+            usuarioId={usuario?.id ?? ''}
+            usuarioNombre={usuario?.nombre ?? ''}
           />
-        </section>
+        </div>
       </div>
 
       {ventana === 'datos' && (

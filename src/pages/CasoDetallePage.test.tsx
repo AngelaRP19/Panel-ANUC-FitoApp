@@ -133,7 +133,8 @@ describe('Detalle del caso · técnico (12c)', () => {
   it('ve su caso sin reasignar y con «Caso asignado a ti»', async () => {
     await renderApp(TECNICO, '/casos/0241')
     expect(await screen.findByText('Caso asignado a ti')).toBeInTheDocument()
-    expect(screen.getByText('Ana Lucía Becerra (tú)')).toBeInTheDocument()
+    // En la franja del encabezado (también aparece como responsable en el formulario).
+    expect(screen.getByText('Ana Lucía Becerra (tú)', { selector: 'dd' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Mis casos asignados' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /Reasignar técnico/ })).not.toBeInTheDocument()
   })
