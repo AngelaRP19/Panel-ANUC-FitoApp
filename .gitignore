@@ -22,7 +22,5 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-
-.claude
-
 pruebas.md
+.claude

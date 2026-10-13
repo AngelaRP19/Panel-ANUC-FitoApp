@@ -4,10 +4,12 @@ import { authHandlers } from './auth'
 import { casosHandlers } from './casos'
 import { inicioHandlers } from './inicio'
 import { navegacionHandlers } from './navegacion'
+import { productoresHandlers } from './productores'
 
 export const handlers = [
   ...authHandlers,
   ...navegacionHandlers,
   ...casosHandlers,
+  ...productoresHandlers,
   ...inicioHandlers,
 ]

@@ -9,6 +9,7 @@ import LoginPage from '@/pages/LoginPage'
 import MiCuentaPage from '@/pages/MiCuentaPage'
 import NotFoundPage from '@/pages/NotFoundPage'
 import PrimerUsoPage from '@/pages/PrimerUsoPage'
+import ProductoresPage from '@/pages/ProductoresPage'
 import RecuperarCuentaPage from '@/pages/RecuperarCuentaPage'
 import SinAccesoPage from '@/pages/SinAccesoPage'
 import { Rol } from '@/types/enums'
@@ -99,7 +100,11 @@ export const rutas: RouteObject[] = [
               pendiente('/alertas/:id/mensaje', 'Mensaje a productores', 12),
               pendiente(PATHS.mapa, 'Mapa de vigilancia', 19),
               pendiente(PATHS.reportes, 'Reportes', 23),
-              pendiente(PATHS.productores, 'Productores', 8),
+              {
+                path: PATHS.productores,
+                element: <ProductoresPage />,
+                handle: titulo('Productores'),
+              },
               pendiente(PATHS.fincas, 'Fincas y cultivos', 9),
               pendiente(PATHS.tecnicos, 'Técnicos', 10),
               pendiente(PATHS.parametros, 'Parámetros epidemiológicos', 13),
