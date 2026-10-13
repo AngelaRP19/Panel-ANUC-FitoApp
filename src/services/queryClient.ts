@@ -1,5 +1,5 @@
 import { QueryClient } from '@tanstack/react-query'
-import axios from 'axios'
+import { esErrorApi } from './apiClient'
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -8,7 +8,7 @@ export const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
       // No reintentar errores 4xx (permisos, no existe, validación)
       retry: (failureCount, error) => {
-        const status = axios.isAxiosError(error) ? error.response?.status : undefined
+        const status = esErrorApi(error) ? error.status : null
         if (status && status >= 400 && status < 500) return false
         return failureCount < 2
       },

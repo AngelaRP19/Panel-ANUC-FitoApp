@@ -1,55 +1,91 @@
-import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios'
-import { tokenStore } from '@/context/tokenStore'
+import axios, { type AxiosError } from 'axios'
+import { env } from '@/config/env'
+import { MENSAJES } from '@/locales/es'
+import { obtenerToken } from '@/services/auth'
 
-export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL ?? '/api/v1',
-  withCredentials: true, // cookie del refresh token
-})
+export const api = axios.create({ baseURL: env.apiUrl })
+
+/**
+ * Error normalizado de la API. Las pantallas muestran `mensaje` y marcan `campos`
+ * en el formulario. `codigo` es 'RED' cuando no hubo respuesta del servidor.
+ */
+export class ErrorApi extends Error {
+  readonly codigo: string
+  readonly campos: Record<string, string>
+  /** Código HTTP; null si no hubo respuesta (sin conexión). */
+  readonly status: number | null
+
+  constructor(params: {
+    codigo: string
+    mensaje: string
+    campos?: Record<string, string>
+    status: number | null
+  }) {
+    super(params.mensaje)
+    this.name = 'ErrorApi'
+    this.codigo = params.codigo
+    this.campos = params.campos ?? {}
+    this.status = params.status
+  }
+}
+
+export function esErrorApi(error: unknown): error is ErrorApi {
+  return error instanceof ErrorApi
+}
 
 /** Formato único de error del backend. */
-export interface ApiErrorBody {
-  error: { codigo: string; mensaje: string; campos: Record<string, string> }
+interface CuerpoError {
+  error?: { codigo?: string; mensaje?: string; campos?: Record<string, string> }
 }
 
-export function isApiError(err: unknown): err is AxiosError<ApiErrorBody> {
-  return axios.isAxiosError(err) && !!(err.response?.data as ApiErrorBody | undefined)?.error
+function normalizar(error: AxiosError<CuerpoError>): ErrorApi {
+  if (!error.response) {
+    return new ErrorApi({ codigo: 'RED', mensaje: MENSAJES.errorConexionTexto, status: null })
+  }
+  const cuerpo = error.response.data?.error
+  return new ErrorApi({
+    codigo: cuerpo?.codigo ?? `HTTP_${error.response.status}`,
+    mensaje: cuerpo?.mensaje ?? MENSAJES.errorGenerico,
+    campos: cuerpo?.campos,
+    status: error.response.status,
+  })
 }
 
-api.interceptors.request.use((cfg) => {
-  const t = tokenStore.get()
-  if (t) cfg.headers.Authorization = `Bearer ${t}`
+// Quien monta la sesión (AuthContext) decide qué hacer cuando el servidor rechaza el token.
+let alExpirarSesion: (() => void) | null = null
+export function registrarSesionExpirada(fn: (() => void) | null) {
+  alExpirarSesion = fn
+}
+
+// 403/404 al pedir un caso: puede ser de otro técnico. Quien monta el panel decide si muestra
+// «No tienes acceso a este caso» (el backend responde 404 para no revelar que el caso existe).
+let alCasoInaccesible: ((idCaso: string, status: number) => void) | null = null
+export function registrarCasoInaccesible(fn: ((idCaso: string, status: number) => void) | null) {
+  alCasoInaccesible = fn
+}
+
+/** id del caso si la URL es `/casos/{id}` o un subrecurso (`/casos/{id}/evidencias`). */
+function idCasoDeUrl(url: string | undefined): string | null {
+  const m = url ? /^\/casos\/([^/?]+)/.exec(url) : null
+  return m && m[1] !== 'conteos' ? decodeURIComponent(m[1]!) : null
+}
+
+api.interceptors.request.use(async (cfg) => {
+  // El proveedor de identidad (Cognito) renueva el token si hace falta.
+  const token = await obtenerToken()
+  if (token) cfg.headers.Authorization = `Bearer ${token}`
   return cfg
 })
 
-// 401 → un intento de /auth/refresh; si falla, limpiar sesión y redirigir a /login.
-let refreshEnCurso: Promise<string> | null = null
-
-async function refrescarToken(): Promise<string> {
-  const { data } = await api.post<{ access_token: string }>('/auth/refresh')
-  tokenStore.set(data.access_token)
-  return data.access_token
-}
-
 api.interceptors.response.use(
   (res) => res,
-  async (error: AxiosError) => {
-    const original = error.config as (InternalAxiosRequestConfig & { _retry?: boolean }) | undefined
-    const esRutaAuth = original?.url?.startsWith('/auth/')
-    if (error.response?.status !== 401 || !original || original._retry || esRutaAuth) {
-      return Promise.reject(error)
+  (error: AxiosError<CuerpoError>) => {
+    const normalizado = normalizar(error)
+    if (normalizado.status === 401) alExpirarSesion?.()
+    if (normalizado.status === 403 || normalizado.status === 404) {
+      const idCaso = idCasoDeUrl(error.config?.url)
+      if (idCaso) alCasoInaccesible?.(idCaso, normalizado.status)
     }
-    original._retry = true
-    try {
-      refreshEnCurso ??= refrescarToken().finally(() => {
-        refreshEnCurso = null
-      })
-      const token = await refreshEnCurso
-      original.headers.Authorization = `Bearer ${token}`
-      return api(original)
-    } catch (e) {
-      tokenStore.clear()
-      window.location.assign('/login')
-      return Promise.reject(e)
-    }
+    return Promise.reject(normalizado)
   },
 )

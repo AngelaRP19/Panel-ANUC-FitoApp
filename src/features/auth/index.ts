@@ -1,4 +1,10 @@
 // API pública del feature "auth". Otros módulos solo importan desde aquí.
 export * from './hooks'
-export { LoginForm } from './components/LoginForm'
+export type { EstadoVueltaLogin } from './types'
+export { LoginForm, type AvisoLogin } from './components/LoginForm'
+export { NuevaContrasenaForm } from './components/NuevaContrasenaForm'
+export { NuevaContrasenaRecuperacionForm } from './components/NuevaContrasenaRecuperacionForm'
+export { PantallaMarca } from './components/PanelMarca'
+export { PasosPrimerUso } from './components/PasosPrimerUso'
 export { PrimerLiderForm } from './components/PrimerLiderForm'
+export { SolicitarCodigoForm } from './components/SolicitarCodigoForm'

@@ -1,4 +1,7 @@
 @import 'tailwindcss';
+@import '@fontsource-variable/plus-jakarta-sans';
+@import '@fontsource-variable/inter';
+@import '@fontsource-variable/jetbrains-mono';
 
 /*
  * Identidad visual · Panel Fitosanitario ANUC Zetaquirá (sistema de diseño "anucfito").
@@ -42,11 +45,10 @@
   --color-advertencia-suave: #fff4e0;
   --color-peligro: #b42318; /* Errores, acciones destructivas, alerta 'Confirmada' */
   --color-peligro-suave: #fdecea;
-  --color-revision: #5b3fa0; /* 'Análisis técnico', 'Otra patología', alerta 'En revisión' */
+  --color-revision: #5b3fa0; /* Caso 'En revisión', 'Otra patología', alerta 'En revisión' */
   --color-revision-suave: #f0ebfa;
-  --color-reabierto: #a1440f;
-  --color-reabierto-suave: #fdede3;
-  --color-neutro: #3e4c43; /* 'Creado', 'No identificado' */
+  /* Los tokens 'reabierto' del sistema de diseño se omiten: los casos cerrados no se reabren. */
+  --color-neutro: #3e4c43; /* 'Caso creado', 'Registrado', 'No identificado' */
   --color-neutro-suave: #eef2ef;
   --color-inactivo: #5f6b63; /* 'Descartado', cuentas deshabilitadas */
   --color-inactivo-suave: #f1f3f1;
@@ -65,9 +67,10 @@
   --color-calor-4: #b42318; /* umbral alcanzado */
 
   /* ── Tipografía ──────────────────────────────────────────────── */
-  --font-titulos: 'Plus Jakarta Sans', 'Segoe UI', system-ui, sans-serif;
-  --font-texto: Inter, 'Segoe UI', Roboto, system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', Consolas, ui-monospace, monospace;
+  --font-titulos:
+    'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', 'Segoe UI', system-ui, sans-serif;
+  --font-texto: 'Inter Variable', Inter, 'Segoe UI', Roboto, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', 'JetBrains Mono', Consolas, ui-monospace, monospace;
   --font-sans: var(--font-texto);
 
   /* Escala: text-display, text-h1 ... (tamaño + interlineado) */
@@ -107,6 +110,10 @@
 }
 
 @layer base {
+  html {
+    /* El foco no queda tapado por la barra superior fija (64 px) */
+    scroll-padding-top: 80px;
+  }
   body {
     @apply bg-verde-50 font-texto text-cuerpo text-tinta antialiased;
   }
@@ -118,6 +125,17 @@
   :focus-visible {
     outline: 2px solid var(--color-verde-600);
     outline-offset: 2px;
+  }
+  /* Movimiento reducido: sin animaciones ni transiciones (esqueletos, spinners, ventanas) */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }
 
@@ -138,9 +156,43 @@
   @apply font-texto text-cuerpo-sm font-semibold text-tinta;
 }
 @utility sobretitulo {
-  @apply font-texto text-sobretitulo font-semibold uppercase text-tinta-secundaria;
+  @apply font-texto text-sobretitulo font-semibold text-tinta-secundaria uppercase;
+}
+/* Enlace del panel: verde primario, subrayado solo al pasar el cursor */
+@utility enlace {
+  @apply font-semibold text-verde-700 no-underline hover:text-verde-800 hover:underline;
 }
 @utility codigo {
   @apply font-mono text-nota font-medium;
   line-height: 20px;
+}
+
+/* Formas por categoría fitosanitaria (el color nunca es el único medio):
+   Trips triángulo · Botrytis círculo · Roña rombo · Fusarium cruz · Def. magnesio cuadrado */
+@utility forma-triangulo {
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+@utility forma-rombo {
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+}
+@utility forma-cruz {
+  clip-path: polygon(
+    33% 0,
+    67% 0,
+    67% 33%,
+    100% 33%,
+    100% 67%,
+    67% 67%,
+    67% 100%,
+    33% 100%,
+    33% 67%,
+    0 67%,
+    0 33%,
+    33% 33%
+  );
+}
+
+/* Esqueleto de carga (pf-skel): sin animación, respeta el movimiento reducido */
+@utility esqueleto {
+  @apply block rounded-sm bg-verde-100;
 }

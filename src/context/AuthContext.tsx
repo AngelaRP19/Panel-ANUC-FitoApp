@@ -1,43 +1,115 @@
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react'
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react'
+import { api, registrarSesionExpirada } from '@/services/apiClient'
+import * as auth from '@/services/auth'
+import type { ResultadoInicioSesion } from '@/services/auth'
 import type { Rol } from '@/types/enums'
-import { tokenStore } from './tokenStore'
 
+/** Usuario de la sesión (GET /me). El rol sale de aquí, no del token. */
 export interface UsuarioSesion {
   id: string
   nombre: string
   correo: string
+  celular: string
   rol: Rol
+  activo: boolean
 }
 
 interface AuthContextValue {
   usuario: UsuarioSesion | null
-  /** true mientras se intenta restaurar la sesión con /auth/refresh al cargar. */
+  /** true mientras se restaura la sesión al cargar la aplicación. */
   cargando: boolean
-  iniciarSesion: (usuario: UsuarioSesion, accessToken: string) => void
-  cerrarSesion: () => void
-  setCargando: (cargando: boolean) => void
+  /** true si la sesión terminó porque el servidor rechazó el token. */
+  sesionExpirada: boolean
+  iniciarSesion: (correo: string, contrasena: string) => Promise<ResultadoInicioSesion>
+  confirmarNuevaContrasena: (nueva: string) => Promise<void>
+  cerrarSesion: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
+async function obtenerUsuarioActual(): Promise<UsuarioSesion> {
+  const { data } = await api.get<UsuarioSesion>('/me')
+  return data
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [usuario, setUsuario] = useState<UsuarioSesion | null>(null)
-  // TODO(F2): arrancar en true y restaurar la sesión (/auth/refresh + /auth/me) desde features/auth.
-  const [cargando, setCargando] = useState(false)
+  const [cargando, setCargando] = useState(true)
+  const [sesionExpirada, setSesionExpirada] = useState(false)
 
-  const iniciarSesion = useCallback((u: UsuarioSesion, accessToken: string) => {
-    tokenStore.set(accessToken)
-    setUsuario(u)
+  // Restaura la sesión del proveedor de identidad al cargar.
+  useEffect(() => {
+    let vigente = true
+    auth
+      .obtenerToken()
+      .then((token) => (token ? obtenerUsuarioActual() : null))
+      .then((u) => vigente && setUsuario(u))
+      .catch(() => vigente && setUsuario(null))
+      .finally(() => vigente && setCargando(false))
+    return () => {
+      vigente = false
+    }
   }, [])
 
-  const cerrarSesion = useCallback(() => {
-    tokenStore.clear()
-    setUsuario(null)
+  // Un 401 de la API cierra la sesión local; las rutas protegidas llevan a /login?expirada=1.
+  useEffect(() => {
+    registrarSesionExpirada(() => {
+      setSesionExpirada(true)
+      setUsuario(null)
+      void auth.cerrarSesion()
+    })
+    return () => registrarSesionExpirada(null)
+  }, [])
+
+  const completarInicio = useCallback(async () => {
+    setUsuario(await obtenerUsuarioActual())
+    setSesionExpirada(false)
+  }, [])
+
+  const iniciarSesion = useCallback(
+    async (correo: string, contrasena: string) => {
+      const resultado = await auth.iniciarSesion(correo, contrasena)
+      if (resultado.paso === 'LISTO') await completarInicio()
+      return resultado
+    },
+    [completarInicio],
+  )
+
+  const confirmarNuevaContrasena = useCallback(
+    async (nueva: string) => {
+      await auth.confirmarNuevaContrasena(nueva)
+      await completarInicio()
+    },
+    [completarInicio],
+  )
+
+  const cerrarSesion = useCallback(async () => {
+    try {
+      await auth.cerrarSesion()
+    } finally {
+      setUsuario(null)
+      setSesionExpirada(false)
+    }
   }, [])
 
   const value = useMemo(
-    () => ({ usuario, cargando, iniciarSesion, cerrarSesion, setCargando }),
-    [usuario, cargando, iniciarSesion, cerrarSesion],
+    () => ({
+      usuario,
+      cargando,
+      sesionExpirada,
+      iniciarSesion,
+      confirmarNuevaContrasena,
+      cerrarSesion,
+    }),
+    [usuario, cargando, sesionExpirada, iniciarSesion, confirmarNuevaContrasena, cerrarSesion],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

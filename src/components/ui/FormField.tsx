@@ -1,16 +1,20 @@
 import type { ReactNode } from 'react'
 import { AlertCircle } from 'lucide-react'
+import { MENSAJES } from '@/locales/es'
 
 interface FormFieldProps {
   label: string
   htmlFor: string
   required?: boolean
   error?: string
-  hint?: string
+  hint?: ReactNode
   children: ReactNode
 }
 
-/** Etiqueta + control + ayuda o error. Para enlazar el control usa `fieldDescriptionId(htmlFor)`. */
+/**
+ * Etiqueta + control + ayuda o error (pf-campo). El error reemplaza a la ayuda y se anuncia.
+ * Enlaza el control con `aria-describedby={fieldDescriptionId(htmlFor)}`.
+ */
 export function FormField({ label, htmlFor, required, error, hint, children }: FormFieldProps) {
   const descId = fieldDescriptionId(htmlFor)
   return (
@@ -18,7 +22,7 @@ export function FormField({ label, htmlFor, required, error, hint, children }: F
       <label htmlFor={htmlFor} className="etiqueta">
         {label}
         {required && (
-          <span className="text-peligro" aria-hidden="true">
+          <span className="font-semibold text-peligro" aria-hidden="true">
             {' '}
             *
           </span>
@@ -45,14 +49,14 @@ export function FormField({ label, htmlFor, required, error, hint, children }: F
   )
 }
 
-/** Leyenda "* Campo obligatorio" que acompaña a los formularios. */
+/** Leyenda «* Campo obligatorio» al inicio de los formularios. */
 export function RequiredLegend() {
   return (
     <p className="m-0 text-nota text-tinta-terciaria">
       <span className="font-semibold text-peligro" aria-hidden="true">
         *
       </span>{' '}
-      Campo obligatorio
+      {MENSAJES.campoObligatorioLeyenda}
     </p>
   )
 }
