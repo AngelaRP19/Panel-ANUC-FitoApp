@@ -14,7 +14,14 @@ const ESTILO: Record<ResultadoTecnico, { clase: string; icono: LucideIcon }> = {
  * Resultado técnico (decisión humana) con icono + texto (af-resultado). Va separado de la
  * insignia de estado del caso: son cosas distintas.
  */
-export function ResultadoTecnicoBadge({ resultado }: { resultado: ResultadoTecnico | string }) {
+export function ResultadoTecnicoBadge({
+  resultado,
+  detalle,
+}: {
+  resultado: ResultadoTecnico | string
+  /** Categoría u otro dato que se agrega: «Confirmado: Botrytis». */
+  detalle?: string | null
+}) {
   const estilo = ESTILO[resultado as ResultadoTecnico] ?? ESTILO.NO_IDENTIFICADO
   const Icono = estilo.icono
   return (
@@ -26,6 +33,7 @@ export function ResultadoTecnicoBadge({ resultado }: { resultado: ResultadoTecni
     >
       <Icono size={16} strokeWidth={1.75} aria-hidden="true" className="flex-none" />
       {etiqueta(RESULTADO_TECNICO_LABEL, resultado)}
+      {detalle && `: ${detalle}`}
     </span>
   )
 }

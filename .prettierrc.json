@@ -3,7 +3,13 @@
   "singleQuote": true,
   "printWidth": 100,
   "trailingComma": "all",
-  "plugins": ["prettier-plugin-tailwindcss"],
+  "plugins": [
+    "prettier-plugin-tailwindcss"
+  ],
   "tailwindStylesheet": "./src/styles/index.css",
-  "tailwindFunctions": ["cn", "buttonClass"]
+  "tailwindFunctions": [
+    "cn",
+    "buttonClass"
+  ],
+  "endOfLine": "auto"
 }

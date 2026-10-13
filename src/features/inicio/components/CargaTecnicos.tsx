@@ -57,7 +57,7 @@ export function CargaTecnicos({ carga, sinTecnico }: CargaTecnicosProps) {
             tono="adv"
             titulo={`${sinTecnico} ${sinTecnico === 1 ? 'caso pendiente' : 'casos pendientes'} sin técnico.`}
           >
-            <Link to="/casos?sin_tecnico=true" className="enlace">
+            <Link to="/casos?tecnico=sin_asignar" className="enlace">
               Asignar ahora
             </Link>
           </Aviso>

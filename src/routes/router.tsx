@@ -2,11 +2,14 @@ import { lazy, Suspense, type ReactNode } from 'react'
 import { createBrowserRouter, type RouteObject } from 'react-router'
 import type { RouteHandle } from '@/components/layout/AppLayout'
 import { Spinner } from '@/components/ui/Spinner'
+import CasoDetallePage from '@/pages/CasoDetallePage'
+import CasosPage from '@/pages/CasosPage'
 import EnConstruccionPage from '@/pages/EnConstruccionPage'
 import LoginPage from '@/pages/LoginPage'
 import MiCuentaPage from '@/pages/MiCuentaPage'
 import NotFoundPage from '@/pages/NotFoundPage'
 import PrimerUsoPage from '@/pages/PrimerUsoPage'
+import ProductoresPage from '@/pages/ProductoresPage'
 import RecuperarCuentaPage from '@/pages/RecuperarCuentaPage'
 import SinAccesoPage from '@/pages/SinAccesoPage'
 import { Rol } from '@/types/enums'
@@ -69,8 +72,16 @@ export const rutas: RouteObject[] = [
           { path: PATHS.inicio, element: <InicioPorRol />, handle: titulo('Inicio') },
 
           // Líder y técnico (el técnico solo ve lo suyo; lo filtra el backend)
-          pendiente(PATHS.casos, 'Casos', 5),
-          pendiente('/casos/:id', 'Detalle del caso', 6),
+          {
+            path: PATHS.casos,
+            element: <CasosPage />,
+            handle: { titulo: 'Casos', tituloTecnico: 'Mis casos' } satisfies RouteHandle,
+          },
+          {
+            path: '/casos/:id',
+            element: <CasoDetallePage />,
+            handle: { titulo: 'Casos', tituloTecnico: 'Mis casos' } satisfies RouteHandle,
+          },
           pendiente(PATHS.alertas, 'Alertas epidemiológicas', 11),
           { path: PATHS.miCuenta, element: <MiCuentaPage />, handle: titulo('Mi cuenta') },
           { path: PATHS.sinAcceso, element: <SinAccesoPage />, handle: titulo('Mis casos') },
@@ -89,7 +100,11 @@ export const rutas: RouteObject[] = [
               pendiente('/alertas/:id/mensaje', 'Mensaje a productores', 12),
               pendiente(PATHS.mapa, 'Mapa de vigilancia', 19),
               pendiente(PATHS.reportes, 'Reportes', 23),
-              pendiente(PATHS.productores, 'Productores', 8),
+              {
+                path: PATHS.productores,
+                element: <ProductoresPage />,
+                handle: titulo('Productores'),
+              },
               pendiente(PATHS.fincas, 'Fincas y cultivos', 9),
               pendiente(PATHS.tecnicos, 'Técnicos', 10),
               pendiente(PATHS.parametros, 'Parámetros epidemiológicos', 13),
