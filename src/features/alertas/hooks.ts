@@ -6,12 +6,14 @@ import {
   confirmarAlerta,
   descartarAlerta,
   guardarBorradorMensaje,
+  guardarParametros,
+  listarParametros,
   listarAlertas,
   obtenerAlerta,
   obtenerDestinatarios,
   seguirAlerta,
 } from './api'
-import type { Alerta, BorradorMensaje, FiltrosAlertas } from './types'
+import type { Alerta, BorradorMensaje, FiltrosAlertas, ParametrosAlerta } from './types'
 
 export const alertasKeys = {
   all: ['alertas'] as const,
@@ -19,6 +21,7 @@ export const alertasKeys = {
   list: (f: FiltrosAlertas) => [...alertasKeys.lists(), f] as const,
   detail: (id: string) => [...alertasKeys.all, 'detail', id] as const,
   destinatarios: (id: string) => [...alertasKeys.all, 'destinatarios', id] as const,
+  parametros: () => [...alertasKeys.all, 'parametros'] as const,
 }
 
 export const FILTROS_ALERTAS_VACIOS: FiltrosAlertas = { estado: '', page: '1' }
@@ -97,5 +100,17 @@ export function useComunicarAlerta(id: string) {
   return useMutation({
     mutationFn: (b: BorradorMensaje) => comunicarAlerta(id, b),
     onSuccess: actualizar,
+  })
+}
+
+export function useParametros() {
+  return useQuery({ queryKey: alertasKeys.parametros(), queryFn: listarParametros })
+}
+
+export function useGuardarParametros(categoria: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (v: ParametrosAlerta) => guardarParametros(categoria, v),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: alertasKeys.parametros() }),
   })
 }

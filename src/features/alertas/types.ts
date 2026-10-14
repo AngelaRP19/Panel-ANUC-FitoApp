@@ -85,3 +85,14 @@ export interface DestinatariosVereda {
   productores: { id: string; nombre: string; celular: string }[]
   deshabilitados: number
 }
+
+/** Parámetros epidemiológicos de una categoría (pantalla 13 · RQF25). */
+export interface ParametroCategoria extends ParametrosAlerta {
+  categoria: Categoria
+  /** Participa en la detección de concentraciones. */
+  habilitada: boolean
+  /** Explicación extra de por qué no participa. */
+  nota: string | null
+  actualizado_por: Persona | null
+  actualizado_en: string | null
+}

@@ -3,7 +3,7 @@
 //            POST /alertas/{id}/descartar { justificacion } · POST|DELETE /alertas/{id}/seguir
 //            GET /alertas/{id}/destinatarios · PUT /alertas/{id}/borrador
 //            POST /alertas/{id}/comunicar { mensaje, veredas[] }
-// Pendiente: parámetros (pantalla 13).
+//            GET /alertas/parametros · PUT /alertas/parametros/{categoria}
 import { api } from '@/services/apiClient'
 import type {
   Alerta,
@@ -11,6 +11,8 @@ import type {
   DestinatariosVereda,
   FiltrosAlertas,
   ListaAlertas,
+  ParametroCategoria,
+  ParametrosAlerta,
 } from './types'
 
 /** Tamaño de página de la lista (diseño 06: «6 por página»). */
@@ -67,5 +69,23 @@ export async function guardarBorradorMensaje(id: string, b: BorradorMensaje): Pr
 /** Envía el mensaje por WhatsApp; la alerta pasa a Comunicada. */
 export async function comunicarAlerta(id: string, b: BorradorMensaje): Promise<Alerta> {
   const { data } = await api.post<Alerta>(`${ruta(id)}/comunicar`, b)
+  return data
+}
+
+/** Parámetros por categoría. La UI se arma con esta lista: no hay categorías fijas. */
+export async function listarParametros(): Promise<ParametroCategoria[]> {
+  const { data } = await api.get<ParametroCategoria[]>('/alertas/parametros')
+  return data
+}
+
+/** Solo líder. Aplica a las alertas que se generen desde ahora. */
+export async function guardarParametros(
+  categoria: string,
+  valores: ParametrosAlerta,
+): Promise<ParametroCategoria> {
+  const { data } = await api.put<ParametroCategoria>(
+    `/alertas/parametros/${encodeURIComponent(categoria)}`,
+    valores,
+  )
   return data
 }

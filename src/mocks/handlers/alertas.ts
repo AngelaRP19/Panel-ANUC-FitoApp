@@ -1,6 +1,6 @@
 import { http, HttpResponse } from 'msw'
 import type { Vereda } from '@/types/enums'
-import { type AlertaFixture, alertas, CASOS_HISTORICOS } from '../fixtures/alertas'
+import { type AlertaFixture, alertas, CASOS_HISTORICOS, parametros } from '../fixtures/alertas'
 import { casos } from '../fixtures/casos'
 import { diagnosticoDe } from '../fixtures/detalle'
 import { fincas } from '../fixtures/fincas'
@@ -121,6 +121,53 @@ function soloLiderAbierta(u: { rol: string }, a: AlertaFixture) {
 }
 
 export const alertasHandlers = [
+  // Parámetros epidemiológicos (RQF25). Van antes de /alertas/:id para no confundirse con un id.
+  http.get(`${API}/alertas/parametros`, ({ request }) => {
+    const u = usuarioActual(request)
+    if (!u) return noAutenticado()
+    return HttpResponse.json(parametros)
+  }),
+
+  http.put(`${API}/alertas/parametros/:categoria`, async ({ request, params }) => {
+    const u = usuarioActual(request)
+    if (!u) return noAutenticado()
+    if (u.rol !== 'LIDER_TECNICO') {
+      return errorApi(403, 'SOLO_LIDER', 'Solo el líder técnico puede cambiar los parámetros.')
+    }
+    const p = parametros.find((x) => x.categoria === params.categoria)
+    if (!p) return errorApi(404, 'NO_ENCONTRADO', 'La categoría no existe.')
+    if (!p.habilitada) {
+      return errorApi(409, 'NO_PARTICIPA', 'Esta categoría no participa en las alertas.')
+    }
+    const b = (await request.json()) as {
+      num_casos?: number
+      distancia_km?: number
+      intervalo_dias?: number
+    }
+    const campos: Record<string, string> = {}
+    if (!Number.isInteger(b.num_casos) || b.num_casos! < 2) {
+      campos.num_casos = 'Escribe un número entero de 2 o más.'
+    }
+    if (typeof b.distancia_km !== 'number' || b.distancia_km <= 0 || b.distancia_km > 50) {
+      campos.distancia_km = 'Escribe una distancia mayor que 0 y de máximo 50 km.'
+    }
+    if (!Number.isInteger(b.intervalo_dias) || b.intervalo_dias! < 1 || b.intervalo_dias! > 365) {
+      campos.intervalo_dias = 'Escribe un número de días entre 1 y 365.'
+    }
+    if (Object.keys(campos).length) {
+      return errorApi(422, 'VALIDACION', 'Revisa los campos marcados.', campos)
+    }
+    const lider = usuarios.find((x) => x.id === u.id)!
+    Object.assign(p, {
+      num_casos: b.num_casos,
+      distancia_km: b.distancia_km,
+      intervalo_dias: b.intervalo_dias,
+      actualizado_por: { id: lider.id, nombre: lider.nombre },
+      actualizado_en: new Date().toISOString(),
+    })
+    return HttpResponse.json(p)
+  }),
+
   // Lista paginada con el número de alertas por estado (pestañas). Ambos roles.
   http.get(`${API}/alertas`, ({ request }) => {
     const u = usuarioActual(request)

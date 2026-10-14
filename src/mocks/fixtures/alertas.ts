@@ -203,7 +203,46 @@ export const CASOS_HISTORICOS: Record<
 
 export const alertas: AlertaFixture[] = crear()
 
-/** Restaura las alertas del diseño (pruebas). */
+export interface ParametroFixture {
+  categoria: Categoria
+  /** Participa en la detección de concentraciones (hoy solo Trips). */
+  habilitada: boolean
+  num_casos: number
+  distancia_km: number
+  intervalo_dias: number
+  /** Explicación extra de por qué no participa. */
+  nota: string | null
+  actualizado_por: Persona | null
+  actualizado_en: string | null
+}
+
+function crearParametros(): ParametroFixture[] {
+  const base = { ...PARAMETROS, nota: null, actualizado_por: null, actualizado_en: null }
+  return [
+    {
+      ...base,
+      categoria: 'TRIPS',
+      habilitada: true,
+      actualizado_por: WILMAR,
+      actualizado_en: bogota('2026-09-02 10:20'),
+    },
+    { ...base, categoria: 'BOTRYTIS', habilitada: false },
+    { ...base, categoria: 'RONA', habilitada: false },
+    { ...base, categoria: 'FUSARIUM', habilitada: false },
+    {
+      ...base,
+      categoria: 'DEFICIENCIA_MAGNESIO',
+      habilitada: false,
+      nota: 'Es un problema nutricional, no se transmite entre fincas.',
+    },
+  ]
+}
+
+/** Parámetros epidemiológicos por categoría (pantalla 13). */
+export const parametros: ParametroFixture[] = crearParametros()
+
+/** Restaura las alertas y los parámetros del diseño (pruebas). */
 export function reiniciarAlertas() {
   alertas.splice(0, alertas.length, ...crear())
+  parametros.splice(0, parametros.length, ...crearParametros())
 }
