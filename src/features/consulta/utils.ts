@@ -1,3 +1,4 @@
+import { urlGoogleMapsPunto } from '@/components/mapa/estilo'
 import { ESPECIE_LABEL, etiqueta } from '@/locales/es'
 import type { Especie } from '@/types/enums'
 
@@ -11,6 +12,5 @@ export function unirEspecies(especies: Especie[]) {
 /** «1 caso» / «3 casos» */
 export const textoCasos = (n: number) => (n === 1 ? '1 caso' : `${n} casos`)
 
-/** Enlace externo a la ubicación (el mapa de vigilancia es solo del líder). */
-export const urlUbicacion = (lat: number, lng: number) =>
-  `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}#map=16/${lat}/${lng}`
+/** Google Maps en la ubicación (el mapa de vigilancia del panel es solo del líder). */
+export const urlUbicacion = (lat: number, lng: number) => urlGoogleMapsPunto({ lat, lng })

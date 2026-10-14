@@ -1,24 +1,23 @@
 import { Circle } from 'lucide-react'
+import {
+  CENTRO_ZETAQUIRA,
+  hayGoogleMaps,
+  urlGoogleMapsZona,
+  zoomParaRadio,
+  type Punto,
+} from '@/components/mapa/estilo'
+import { MapaEmbebido } from '@/components/mapa/MapaEmbebido'
+import { MapaGoogle } from '@/components/mapa/MapaGoogle'
+import { CirculoRadio, MarcadorCaso } from '@/components/mapa/Marcadores'
 import { FormaCategoria } from '@/components/ui/CategoriaMarca'
 import { CATEGORIA_FORMA_LABEL, CATEGORIA_LABEL } from '@/locales/es'
 import type { Categoria } from '@/types/enums'
 import type { CasoAlerta } from '../types'
 import { formatearKm } from '../utils'
 
-const ANCHO = 600
+/** Alto del mapa en px (h-57.5): el zoom se elige para que el círculo quepa. */
 const ALTO = 230
-/** Radio del círculo de la alerta en el dibujo (px del viewBox). */
-const RADIO = 95
 const KM_POR_GRADO = 111.32
-
-/** Relleno de la marca de cada categoría (la forma la da FormaCategoria en la leyenda). */
-const RELLENO: Record<Categoria, string> = {
-  TRIPS: 'fill-cat-trips',
-  BOTRYTIS: 'fill-cat-botrytis',
-  RONA: 'fill-cat-rona',
-  FUSARIUM: 'fill-cat-fusarium',
-  DEFICIENCIA_MAGNESIO: 'fill-cat-magnesio',
-}
 
 interface MapaAlertaProps {
   casos: CasoAlerta[]
@@ -28,112 +27,118 @@ interface MapaAlertaProps {
   etiqueta: string
 }
 
-/** Puntos de los casos alrededor de su centro, a escala del radio de la alerta. */
-function proyectar(casos: CasoAlerta[], radioKm: number) {
-  const conUbicacion = casos.filter((c) => c.latitud !== null && c.longitud !== null)
-  if (!conUbicacion.length) return []
-  const lat0 = conUbicacion.reduce((s, c) => s + c.latitud!, 0) / conUbicacion.length
-  const lng0 = conUbicacion.reduce((s, c) => s + c.longitud!, 0) / conUbicacion.length
-  const escala = RADIO / radioKm
-  const cos = Math.cos((lat0 * Math.PI) / 180)
+/**
+ * Leyenda: forma de la categoría y radio de la alerta. No intercepta el clic del mapa. En el
+ * mapa embebido (sin figuras dibujadas) resume la zona en texto.
+ */
+function Leyenda({
+  categoria,
+  radioKm,
+  numCasos,
+  dibujado,
+}: {
+  categoria: Categoria
+  radioKm: number
+  numCasos: number
+  dibujado: boolean
+}) {
+  if (!dibujado) {
+    return (
+      <div className="pointer-events-none absolute bottom-2 left-2 rounded-md bg-blanco/95 px-3 py-2 text-nota shadow-1">
+        Zona de la alerta · {numCasos} casos de {CATEGORIA_LABEL[categoria]} en un radio de{' '}
+        {formatearKm(radioKm)}
+      </div>
+    )
+  }
+  return (
+    <div className="pointer-events-none absolute bottom-2 left-2 flex flex-wrap gap-x-4 gap-y-1 rounded-md bg-blanco/95 px-3 py-2 text-nota shadow-1">
+      <span className="inline-flex items-center gap-1.5">
+        <FormaCategoria categoria={categoria} />
+        {CATEGORIA_LABEL[categoria]} confirmado ({CATEGORIA_FORMA_LABEL[categoria]})
+      </span>
+      <span className="inline-flex items-center gap-1.5">
+        <Circle size={14} className="text-advertencia" strokeDasharray="4 3" aria-hidden="true" />
+        Radio {formatearKm(radioKm)}
+      </span>
+    </div>
+  )
+}
+
+/** Centro de los casos y su posición; los de la misma finca se separan unos 70 m. */
+function ubicar(casos: CasoAlerta[]) {
+  const con = casos.filter((c) => c.latitud !== null && c.longitud !== null)
+  if (!con.length) return null
+  const centro = {
+    lat: con.reduce((s, c) => s + c.latitud!, 0) / con.length,
+    lng: con.reduce((s, c) => s + c.longitud!, 0) / con.length,
+  }
   const vistos = new Map<string, number>()
-  return conUbicacion.map((c) => {
-    // Casos de la misma finca: se separan un poco para que no se tapen.
+  const puntos = con.map((c) => {
     const clave = `${c.latitud},${c.longitud}`
-    const repetido = vistos.get(clave) ?? 0
-    vistos.set(clave, repetido + 1)
-    return {
-      codigo: c.codigo,
-      x: ANCHO / 2 + (c.longitud! - lng0) * KM_POR_GRADO * cos * escala + repetido * 16,
-      y: ALTO / 2 - (c.latitud! - lat0) * KM_POR_GRADO * escala - repetido * 14,
-    }
+    const n = vistos.get(clave) ?? 0
+    vistos.set(clave, n + 1)
+    return { caso: c, posicion: { lat: c.latitud! + n * 0.0006, lng: c.longitud! + n * 0.0006 } }
   })
+  return { centro, puntos }
+}
+
+/** Rectángulo que contiene el círculo del radio. */
+function limitesCirculo(centro: Punto, radioKm: number) {
+  const dLat = radioKm / KM_POR_GRADO
+  const dLng = radioKm / (KM_POR_GRADO * Math.cos((centro.lat * Math.PI) / 180))
+  return {
+    north: centro.lat + dLat,
+    south: centro.lat - dLat,
+    east: centro.lng + dLng,
+    west: centro.lng - dLng,
+  }
 }
 
 /**
- * Mapa ilustrativo de la alerta (pf-mapa del diseño 06): círculo del radio y los casos con la
- * forma de su categoría. No es un mapa real; el de Leaflet llega con la pantalla 19.
+ * Mapa de la alerta (diseño 06) en Google Maps; un clic abre Google Maps en la zona. Con
+ * clave de la API es el mapa en relieve con el círculo del radio y cada caso con la forma
+ * de su categoría y su número (clic en un caso: su punto). Sin clave es el mapa embebido
+ * de la zona: Google lo desplaza al cargar, así que no se dibujan figuras encima.
  */
 export function MapaAlerta({ casos, categoria, radioKm, etiqueta }: MapaAlertaProps) {
-  const puntos = proyectar(casos, radioKm)
+  const u = ubicar(casos)
+  const centro = u?.centro ?? CENTRO_ZETAQUIRA
+  const zoom = zoomParaRadio(centro.lat, radioKm * 1000, ALTO - 40)
+  const enlace = urlGoogleMapsZona(centro, zoom)
+  const leyenda = (dibujado: boolean) => (
+    <Leyenda categoria={categoria} radioKm={radioKm} numCasos={casos.length} dibujado={dibujado} />
+  )
+
+  const embebido = (clase: string) => (
+    <MapaEmbebido
+      centro={centro}
+      zoom={zoom}
+      etiqueta={etiqueta}
+      enlace={enlace}
+      className={clase}
+      superpuesto={leyenda(false)}
+    />
+  )
+  if (!hayGoogleMaps() || !u) return embebido('h-57.5')
   return (
-    <div
-      role="img"
-      aria-label={etiqueta}
-      className="relative h-57.5 overflow-hidden rounded-lg border border-borde bg-neutro-suave"
+    <MapaGoogle
+      etiqueta={etiqueta}
+      encuadre={{ limites: limitesCirculo(u.centro, radioKm) }}
+      enlace={enlace}
+      respaldo={embebido('h-full rounded-none border-0')}
+      className="h-57.5"
+      superpuesto={leyenda(true)}
     >
-      <svg
-        viewBox={`0 0 ${ANCHO} ${ALTO}`}
-        preserveAspectRatio="xMidYMid slice"
-        className="absolute inset-0 size-full"
-        aria-hidden="true"
-      >
-        <path
-          d="M0 190 C 120 170, 220 210, 330 185 S 500 160, 600 190"
-          className="fill-none stroke-borde"
-          strokeWidth={2}
+      <CirculoRadio centro={u.centro} radioKm={radioKm} />
+      {u.puntos.map(({ caso, posicion }) => (
+        <MarcadorCaso
+          key={caso.id}
+          posicion={posicion}
+          categoria={categoria}
+          codigo={caso.codigo}
+          titulo={`Caso #${caso.codigo} · ${caso.productor_nombre} · ${caso.finca_nombre}`}
         />
-        <path
-          d="M90 0 C 120 60, 150 110, 170 150 S 190 210, 180 230"
-          className="fill-none stroke-info-suave"
-          strokeWidth={10}
-        />
-        <path
-          d="M0 60 C 120 55, 250 45, 360 50 S 520 60, 600 45"
-          className="fill-none stroke-blanco"
-          strokeWidth={8}
-        />
-        <path
-          d="M360 50 C 352 100, 340 150, 330 230"
-          className="fill-none stroke-blanco"
-          strokeWidth={6}
-        />
-        <circle
-          cx={ANCHO / 2}
-          cy={ALTO / 2}
-          r={RADIO}
-          className="fill-advertencia/8 stroke-advertencia"
-          strokeWidth={2.5}
-          strokeDasharray="10 7"
-        />
-        {puntos.map((p) => (
-          <g key={p.codigo}>
-            {categoria === 'TRIPS' ? (
-              <polygon
-                points={`${p.x},${p.y - 11} ${p.x + 10},${p.y + 7} ${p.x - 10},${p.y + 7}`}
-                className={`${RELLENO[categoria]} stroke-blanco`}
-                strokeWidth={2.5}
-                strokeLinejoin="round"
-              />
-            ) : (
-              <circle
-                cx={p.x}
-                cy={p.y}
-                r={9}
-                className={`${RELLENO[categoria]} stroke-blanco`}
-                strokeWidth={2.5}
-              />
-            )}
-            <text
-              x={p.x + 13}
-              y={p.y + 5}
-              className="fill-tinta font-mono text-[13px] font-semibold"
-            >
-              #{p.codigo}
-            </text>
-          </g>
-        ))}
-      </svg>
-      <div className="absolute bottom-2 left-2 flex flex-wrap gap-x-4 gap-y-1 rounded-md bg-blanco/95 px-3 py-2 text-nota shadow-1">
-        <span className="inline-flex items-center gap-1.5">
-          <FormaCategoria categoria={categoria} />
-          {CATEGORIA_LABEL[categoria]} confirmado ({CATEGORIA_FORMA_LABEL[categoria]})
-        </span>
-        <span className="inline-flex items-center gap-1.5">
-          <Circle size={14} className="text-advertencia" strokeDasharray="4 3" aria-hidden="true" />
-          Radio {formatearKm(radioKm)}
-        </span>
-      </div>
-    </div>
+      ))}
+    </MapaGoogle>
   )
 }

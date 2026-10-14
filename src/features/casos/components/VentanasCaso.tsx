@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router'
-import { MapPin } from 'lucide-react'
 import { Aviso } from '@/components/ui/Aviso'
 import { Button, buttonClass } from '@/components/ui/Button'
+import { MiniMapa } from '@/components/ui/MiniMapa'
 import { Modal } from '@/components/ui/Modal'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { toast } from '@/components/ui/Toast'
@@ -104,48 +104,6 @@ function Dato({
   )
 }
 
-/** Mini mapa ilustrativo de la ubicación (el mapa real con Leaflet llega con la pantalla 19). */
-function MiniMapa({ caso }: { caso: CasoDetalle }) {
-  return (
-    <div
-      role="img"
-      aria-label={`Ubicación aproximada de la finca ${caso.finca.nombre}, vereda ${etiqueta(VEREDA_LABEL, caso.finca.vereda, caso.finca.vereda)}`}
-      className="relative h-35 overflow-hidden rounded-md border border-borde bg-neutro-suave"
-    >
-      <svg
-        viewBox="0 0 280 164"
-        preserveAspectRatio="xMidYMid slice"
-        className="absolute inset-0 size-full"
-        aria-hidden="true"
-      >
-        <path
-          d="M-10 40 C 60 30, 90 70, 150 60 S 250 20, 300 30"
-          className="fill-none stroke-blanco"
-          strokeWidth={6}
-        />
-        <path
-          d="M120 -10 C 110 40, 150 90, 130 180"
-          className="fill-none stroke-blanco"
-          strokeWidth={4}
-        />
-        <path
-          d="M-10 120 C 50 110, 90 140, 160 120 S 240 150, 300 140"
-          className="fill-none stroke-info-suave"
-          strokeWidth={5}
-        />
-        <text x="18" y="100" className="fill-tinta-terciaria text-xs font-semibold">
-          {etiqueta(VEREDA_LABEL, caso.finca.vereda, caso.finca.vereda)}
-        </text>
-      </svg>
-      <MapPin
-        size={28}
-        aria-hidden="true"
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-full fill-verde-700 text-blanco"
-      />
-    </div>
-  )
-}
-
 /** «Productor, finca y cultivo» en solo lectura (botón «Productor y finca» del encabezado). */
 export function ProductorFincaDialog({
   caso,
@@ -216,7 +174,12 @@ export function ProductorFincaDialog({
           {etiqueta(ESPECIE_LABEL, caso.especie, caso.especie)}
         </Dato>
       </dl>
-      <MiniMapa caso={caso} />
+      <MiniMapa
+        latitud={caso.finca.latitud}
+        longitud={caso.finca.longitud}
+        etiqueta={`Ubicación aproximada de la finca ${caso.finca.nombre}, vereda ${etiqueta(VEREDA_LABEL, caso.finca.vereda, caso.finca.vereda)}`}
+        className="h-35"
+      />
     </Modal>
   )
 }

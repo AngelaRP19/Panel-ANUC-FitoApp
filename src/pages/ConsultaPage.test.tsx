@@ -76,6 +76,14 @@ describe('Productores y fincas de mis casos (técnico)', () => {
     ).toBeInTheDocument()
     const mapa = within(f).getByRole('link', { name: /Abrir ubicación en el mapa/ })
     expect(mapa).toHaveAttribute('target', '_blank')
+    const google = 'https://www.google.com/maps/search/?api=1&query=5.248100,-73.170200'
+    expect(mapa).toHaveAttribute('href', google)
+    // Un clic sobre el mapa también abre Google Maps en la finca.
+    expect(
+      within(f).getByRole('link', {
+        name: /^Abrir en Google Maps: Ubicación de la finca El Porvenir/,
+      }),
+    ).toHaveAttribute('href', google)
     expect(within(f).getByText('Si un dato está mal, avisa al líder técnico.')).toBeInTheDocument()
     expect(within(f).queryByRole('button', { name: /Editar/ })).toBeNull()
   })

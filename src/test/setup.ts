@@ -17,8 +17,8 @@ globalThis.ResizeObserver ??= class {
   disconnect() {}
 }
 
-// Margen para máquinas lentas: las pruebas de pantalla corren en paralelo.
-configure({ asyncUtilTimeout: 5000 })
+// Margen para máquinas lentas o cargadas: las pruebas de pantalla corren en paralelo.
+configure({ asyncUtilTimeout: 10_000 })
 
 beforeAll(() => server.listen({ onUnhandledRequest: 'error' }))
 afterEach(() => {

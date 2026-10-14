@@ -52,7 +52,15 @@ describe('Alertas epidemiológicas', () => {
         name: 'Radio de 3,5 km alrededor de 4 casos confirmados de Trips en Juracambita',
       }),
     ).toBeInTheDocument()
-    expect(within(d).getByText('Radio 3,5 km')).toBeInTheDocument()
+    expect(
+      within(d).getByText('Zona de la alerta · 4 casos de Trips en un radio de 3,5 km'),
+    ).toBeInTheDocument()
+    // Un clic en el mapa abre Google Maps en la zona de la alerta (pestaña nueva).
+    const mapa = within(d).getByRole('link', { name: /^Abrir en Google Maps: Radio de 3,5 km/ })
+    expect(mapa).toHaveAttribute('target', '_blank')
+    expect(mapa.getAttribute('href')).toMatch(
+      /^https:\/\/www\.google\.com\/maps\/@\?api=1&map_action=map&center=5\.\d+,-73\.\d+&zoom=\d+&basemap=terrain$/,
+    )
     expect(within(d).getByRole('button', { name: 'Confirmar alerta' })).toBeInTheDocument()
   })
 

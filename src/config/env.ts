@@ -11,6 +11,8 @@ const esquema = z
       .transform((v) => v === 'true'),
     VITE_COGNITO_USER_POOL_ID: z.string().default(''),
     VITE_COGNITO_CLIENT_ID: z.string().default(''),
+    /** Clave de Google Maps JavaScript API. Sin ella, los mapas se muestran esquemáticos. */
+    VITE_GOOGLE_MAPS_API_KEY: z.string().default(''),
   })
   .superRefine((v, ctx) => {
     // Sin mocks, la autenticación real necesita el User Pool de Cognito.
@@ -35,6 +37,8 @@ function leerEnv() {
     /** true: la API y Cognito se simulan (MSW + adaptador de auth en memoria). */
     usarMocks: v.VITE_USE_MOCKS,
     cognito: { userPoolId: v.VITE_COGNITO_USER_POOL_ID, clientId: v.VITE_COGNITO_CLIENT_ID },
+    /** En las pruebas (jsdom) no se carga Google Maps: se usa el mapa esquemático. */
+    googleMapsApiKey: import.meta.env.MODE === 'test' ? '' : v.VITE_GOOGLE_MAPS_API_KEY,
   }
 }
 
