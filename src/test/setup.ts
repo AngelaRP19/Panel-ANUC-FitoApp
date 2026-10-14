@@ -6,6 +6,7 @@ import { fijarEscenario } from '@/mocks/escenario'
 import { reiniciarCasos } from '@/mocks/fixtures/casos'
 import { reiniciarFincas } from '@/mocks/fixtures/fincas'
 import { reiniciarProductores } from '@/mocks/fixtures/productores'
+import { reiniciarUsuarios } from '@/mocks/fixtures/usuarios'
 import { server } from '@/mocks/server'
 
 // jsdom no implementa ResizeObserver (lo usan componentes de Radix como Switch).
@@ -26,6 +27,7 @@ afterEach(() => {
   reiniciarCasos()
   reiniciarProductores()
   reiniciarFincas()
+  reiniciarUsuarios()
   sessionStorage.clear()
 })
 afterAll(() => server.close())

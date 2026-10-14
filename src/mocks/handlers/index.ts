@@ -6,6 +6,7 @@ import { fincasHandlers } from './fincas'
 import { inicioHandlers } from './inicio'
 import { navegacionHandlers } from './navegacion'
 import { productoresHandlers } from './productores'
+import { usuariosHandlers } from './usuarios'
 
 export const handlers = [
   ...authHandlers,
@@ -13,5 +14,6 @@ export const handlers = [
   ...casosHandlers,
   ...productoresHandlers,
   ...fincasHandlers,
+  ...usuariosHandlers,
   ...inicioHandlers,
 ]

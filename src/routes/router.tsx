@@ -13,6 +13,7 @@ import PrimerUsoPage from '@/pages/PrimerUsoPage'
 import ProductoresPage from '@/pages/ProductoresPage'
 import RecuperarCuentaPage from '@/pages/RecuperarCuentaPage'
 import SinAccesoPage from '@/pages/SinAccesoPage'
+import TecnicosPage from '@/pages/TecnicosPage'
 import { Rol } from '@/types/enums'
 import { IndexRedirect } from './IndexRedirect'
 import { InicioPorRol } from './InicioPorRol'
@@ -107,7 +108,7 @@ export const rutas: RouteObject[] = [
                 handle: titulo('Productores'),
               },
               { path: PATHS.fincas, element: <FincasPage />, handle: titulo('Fincas y cultivos') },
-              pendiente(PATHS.tecnicos, 'Técnicos', 10),
+              { path: PATHS.tecnicos, element: <TecnicosPage />, handle: titulo('Técnicos') },
               pendiente(PATHS.parametros, 'Parámetros epidemiológicos', 13),
               pendiente(PATHS.documentacion, 'Documentación fitosanitaria', 20),
             ],
