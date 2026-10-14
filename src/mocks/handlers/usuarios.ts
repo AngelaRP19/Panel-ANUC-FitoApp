@@ -46,7 +46,7 @@ interface CuerpoCuenta {
   rol?: Rol
 }
 
-function validar(b: CuerpoCuenta, excluirId?: string) {
+export function validar(b: CuerpoCuenta, excluirId?: string) {
   const campos: Record<string, string> = {}
   if (!b.nombre?.trim()) campos.nombre = 'Escribe el nombre completo.'
   if (!b.correo || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(b.correo)) {

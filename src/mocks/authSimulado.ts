@@ -104,6 +104,16 @@ export const adaptadorSimulado: AdaptadorAuth = {
     if (!buscar(correo)) throw new ErrorAuth('CUENTA_INEXISTENTE')
   },
 
+  async cambiarContrasena(actual, nueva) {
+    await esperar()
+    const id = almacen.leer()
+    const u = usuarios.find((x) => x.id === id)
+    if (!u) throw new ErrorAuth('DESCONOCIDO', 'No hay sesión')
+    if (u.contrasena !== actual) throw new ErrorAuth('CONTRASENA_ACTUAL')
+    if (!POLITICA.test(nueva)) throw new ErrorAuth('CONTRASENA_INVALIDA')
+    u.contrasena = nueva
+  },
+
   async confirmarRecuperacion(correo, codigo, nueva) {
     await esperar()
     const u = buscar(correo)

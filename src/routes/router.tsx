@@ -6,6 +6,7 @@ import AlertaMensajePage from '@/pages/AlertaMensajePage'
 import AlertasPage from '@/pages/AlertasPage'
 import CasoDetallePage from '@/pages/CasoDetallePage'
 import CasosPage from '@/pages/CasosPage'
+import ConsultaPage from '@/pages/ConsultaPage'
 import EnConstruccionPage from '@/pages/EnConstruccionPage'
 import FincasPage from '@/pages/FincasPage'
 import LoginPage from '@/pages/LoginPage'
@@ -96,7 +97,13 @@ export const rutas: RouteObject[] = [
           {
             // El líder consulta y edita productores y fincas en su propia sección.
             element: <RoleRoute roles={[Rol.TECNICO]} redirigirA={PATHS.productores} />,
-            children: [pendiente(PATHS.consulta, 'Productores y fincas', 14)],
+            children: [
+              {
+                path: PATHS.consulta,
+                element: <ConsultaPage />,
+                handle: titulo('Productores y fincas'),
+              },
+            ],
           },
 
           // Solo líder técnico
