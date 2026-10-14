@@ -58,6 +58,8 @@ export interface Alerta extends AlertaResumen {
   confirmada_en: string | null
   comunicada_en: string | null
   descarte: { motivo: string; por: Persona; en: string } | null
+  /** Mensaje a productores guardado como borrador (pantalla 12). */
+  borrador: BorradorMensaje | null
   /** Quien consulta pidió «Avisarme cuando cambie». */
   siguiendo: boolean
 }
@@ -66,4 +68,20 @@ export type FiltrosAlertas = {
   /** '' = todas */
   estado: string
   page: string
+}
+
+export interface BorradorMensaje {
+  /** Recomendación del técnico (máx. 300 caracteres). */
+  mensaje: string
+  veredas: Vereda[]
+  guardado_en?: string
+}
+
+export interface DestinatariosVereda {
+  vereda: Vereda
+  /** Es la vereda donde se detectó la alerta. */
+  zona_alerta: boolean
+  /** Productores activos: los únicos que reciben el mensaje. */
+  productores: { id: string; nombre: string; celular: string }[]
+  deshabilitados: number
 }

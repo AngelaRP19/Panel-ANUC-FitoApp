@@ -2,7 +2,7 @@
 import { CATEGORIA_LABEL, VEREDA_LABEL } from '@/locales/es'
 import { esErrorApi } from '@/services/apiClient'
 import { formatearDecimal } from '@/utils/numeros'
-import type { AlertaResumen } from './types'
+import type { AlertaResumen, BorradorMensaje } from './types'
 
 const km = (n: number) => `${formatearDecimal(n, 1)} km`
 
@@ -78,3 +78,37 @@ export { km as formatearKm }
 export function esAlertaNoEncontrada(error: unknown) {
   return esErrorApi(error) && error.status === 404
 }
+
+/** Máximo de caracteres de la recomendación del técnico (pantalla 12). */
+export const MAX_RECOMENDACION = 300
+
+/** Partes fijas de la plantilla del mensaje: «… casos de [categoría] … técnico: [mensaje]». */
+export const PLANTILLA_MENSAJE = {
+  inicio: 'Alerta fitosanitaria:',
+  antesCategoria: ' se ha identificado una concentración de casos de ',
+  antesMensaje: ' en una zona determinada. Recomendación del técnico: ',
+}
+
+const claveBorrador = (id: string) => `anuc.borrador-mensaje-alerta.${id}`
+
+/** Borrador sin guardar del mensaje (recargas y caídas de conexión). */
+export function leerBorradorLocal(id: string): BorradorMensaje | null {
+  try {
+    const t = sessionStorage.getItem(claveBorrador(id))
+    return t ? (JSON.parse(t) as BorradorMensaje) : null
+  } catch {
+    return null
+  }
+}
+
+export function guardarBorradorLocal(id: string, b: BorradorMensaje | null) {
+  try {
+    if (b) sessionStorage.setItem(claveBorrador(id), JSON.stringify(b))
+    else sessionStorage.removeItem(claveBorrador(id))
+  } catch {
+    /* sin almacenamiento: el borrador vive solo en el formulario */
+  }
+}
+
+/** «1 productor» / «6 productores» */
+export const textoProductores = (n: number) => (n === 1 ? '1 productor' : `${n} productores`)

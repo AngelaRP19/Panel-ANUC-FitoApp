@@ -1,9 +1,17 @@
 // Llamadas HTTP del feature "alertas" (RQF26). Único lugar del feature que usa `api`.
 // Endpoints: GET /alertas?estado&page · GET /alertas/{id} · POST /alertas/{id}/confirmar
 //            POST /alertas/{id}/descartar { justificacion } · POST|DELETE /alertas/{id}/seguir
-// Pendientes: parámetros (pantalla 13) y comunicar (pantalla 12).
+//            GET /alertas/{id}/destinatarios · PUT /alertas/{id}/borrador
+//            POST /alertas/{id}/comunicar { mensaje, veredas[] }
+// Pendiente: parámetros (pantalla 13).
 import { api } from '@/services/apiClient'
-import type { Alerta, FiltrosAlertas, ListaAlertas } from './types'
+import type {
+  Alerta,
+  BorradorMensaje,
+  DestinatariosVereda,
+  FiltrosAlertas,
+  ListaAlertas,
+} from './types'
 
 /** Tamaño de página de la lista (diseño 06: «6 por página»). */
 export const ALERTAS_POR_PAGINA = 6
@@ -42,5 +50,22 @@ export async function seguirAlerta(id: string, seguir: boolean): Promise<Alerta>
   const { data } = seguir
     ? await api.post<Alerta>(`${ruta(id)}/seguir`)
     : await api.delete<Alerta>(`${ruta(id)}/seguir`)
+  return data
+}
+
+/** Productores por vereda que pueden recibir el mensaje de la alerta. */
+export async function obtenerDestinatarios(id: string): Promise<DestinatariosVereda[]> {
+  const { data } = await api.get<DestinatariosVereda[]>(`${ruta(id)}/destinatarios`)
+  return data
+}
+
+export async function guardarBorradorMensaje(id: string, b: BorradorMensaje): Promise<Alerta> {
+  const { data } = await api.put<Alerta>(`${ruta(id)}/borrador`, b)
+  return data
+}
+
+/** Envía el mensaje por WhatsApp; la alerta pasa a Comunicada. */
+export async function comunicarAlerta(id: string, b: BorradorMensaje): Promise<Alerta> {
+  const { data } = await api.post<Alerta>(`${ruta(id)}/comunicar`, b)
   return data
 }

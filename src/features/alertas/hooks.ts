@@ -1,14 +1,24 @@
 // Hooks de TanStack Query del feature "alertas". Las páginas solo usan estos hooks.
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useUrlFilters } from '@/hooks/useUrlFilters'
-import { confirmarAlerta, descartarAlerta, listarAlertas, obtenerAlerta, seguirAlerta } from './api'
-import type { Alerta, FiltrosAlertas } from './types'
+import {
+  comunicarAlerta,
+  confirmarAlerta,
+  descartarAlerta,
+  guardarBorradorMensaje,
+  listarAlertas,
+  obtenerAlerta,
+  obtenerDestinatarios,
+  seguirAlerta,
+} from './api'
+import type { Alerta, BorradorMensaje, FiltrosAlertas } from './types'
 
 export const alertasKeys = {
   all: ['alertas'] as const,
   lists: () => [...alertasKeys.all, 'list'] as const,
   list: (f: FiltrosAlertas) => [...alertasKeys.lists(), f] as const,
   detail: (id: string) => [...alertasKeys.all, 'detail', id] as const,
+  destinatarios: (id: string) => [...alertasKeys.all, 'destinatarios', id] as const,
 }
 
 export const FILTROS_ALERTAS_VACIOS: FiltrosAlertas = { estado: '', page: '1' }
@@ -62,6 +72,30 @@ export function useSeguirAlerta() {
   const actualizar = useAlActualizar()
   return useMutation({
     mutationFn: ({ id, seguir }: { id: string; seguir: boolean }) => seguirAlerta(id, seguir),
+    onSuccess: actualizar,
+  })
+}
+
+export function useDestinatarios(id: string, enabled = true) {
+  return useQuery({
+    queryKey: alertasKeys.destinatarios(id),
+    queryFn: () => obtenerDestinatarios(id),
+    enabled,
+  })
+}
+
+export function useGuardarBorradorMensaje(id: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (b: BorradorMensaje) => guardarBorradorMensaje(id, b),
+    onSuccess: (a) => queryClient.setQueryData(alertasKeys.detail(a.id), a),
+  })
+}
+
+export function useComunicarAlerta(id: string) {
+  const actualizar = useAlActualizar()
+  return useMutation({
+    mutationFn: (b: BorradorMensaje) => comunicarAlerta(id, b),
     onSuccess: actualizar,
   })
 }
