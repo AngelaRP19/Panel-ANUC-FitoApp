@@ -65,7 +65,7 @@ export function resumenDemo(): ResumenPanel {
       destacada: { categoria: 'TRIPS', vereda: 'Juracambita' },
       recientes: [
         {
-          id: 'a-4',
+          id: 'ALR-012',
           estado: 'GENERADA',
           categoria: 'TRIPS',
           vereda: 'Juracambita',
@@ -74,7 +74,7 @@ export function resumenDemo(): ResumenPanel {
           generada_en: hace(4 * HORA),
         },
         {
-          id: 'a-3',
+          id: 'ALR-011',
           estado: 'EN_REVISION',
           categoria: 'TRIPS',
           vereda: 'San Luis',
@@ -83,7 +83,7 @@ export function resumenDemo(): ResumenPanel {
           generada_en: hace(2 * DIA),
         },
         {
-          id: 'a-2',
+          id: 'ALR-010',
           estado: 'CONFIRMADA',
           categoria: 'TRIPS',
           vereda: 'Centro',
@@ -92,7 +92,7 @@ export function resumenDemo(): ResumenPanel {
           generada_en: hace(9 * DIA),
         },
         {
-          id: 'a-1',
+          id: 'ALR-009',
           estado: 'COMUNICADA',
           categoria: 'TRIPS',
           vereda: 'Juracambita',

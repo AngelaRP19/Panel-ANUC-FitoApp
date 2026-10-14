@@ -1,7 +1,10 @@
 // API pública del feature "alertas". Otros módulos solo importan desde aquí.
 export * from './hooks'
-export { AlertasTabla } from './components/AlertasTabla'
+export type * from './types'
+export { AlertasTabs } from './components/AlertasTabs'
+export { AlertasLista } from './components/AlertasLista'
+export { AlertaDetalle } from './components/AlertaDetalle'
 export { MapaAlerta } from './components/MapaAlerta'
-export { AccionesAlerta } from './components/AccionesAlerta'
 export { ParametrosForm } from './components/ParametrosForm'
 export { ESTADO_ALERTA_TONO } from './estados'
+export { esAlertaNoEncontrada } from './utils'
