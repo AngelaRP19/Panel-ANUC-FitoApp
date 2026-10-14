@@ -2,6 +2,8 @@ import { lazy, Suspense, type ReactNode } from 'react'
 import { createBrowserRouter, type RouteObject } from 'react-router'
 import type { RouteHandle } from '@/components/layout/AppLayout'
 import { Spinner } from '@/components/ui/Spinner'
+import AlertaMensajePage from '@/pages/AlertaMensajePage'
+import AlertasPage from '@/pages/AlertasPage'
 import CasoDetallePage from '@/pages/CasoDetallePage'
 import CasosPage from '@/pages/CasosPage'
 import EnConstruccionPage from '@/pages/EnConstruccionPage'
@@ -9,10 +11,12 @@ import FincasPage from '@/pages/FincasPage'
 import LoginPage from '@/pages/LoginPage'
 import MiCuentaPage from '@/pages/MiCuentaPage'
 import NotFoundPage from '@/pages/NotFoundPage'
+import ParametrosPage from '@/pages/ParametrosPage'
 import PrimerUsoPage from '@/pages/PrimerUsoPage'
 import ProductoresPage from '@/pages/ProductoresPage'
 import RecuperarCuentaPage from '@/pages/RecuperarCuentaPage'
 import SinAccesoPage from '@/pages/SinAccesoPage'
+import TecnicosPage from '@/pages/TecnicosPage'
 import { Rol } from '@/types/enums'
 import { IndexRedirect } from './IndexRedirect'
 import { InicioPorRol } from './InicioPorRol'
@@ -83,7 +87,8 @@ export const rutas: RouteObject[] = [
             element: <CasoDetallePage />,
             handle: { titulo: 'Casos', tituloTecnico: 'Mis casos' } satisfies RouteHandle,
           },
-          pendiente(PATHS.alertas, 'Alertas epidemiológicas', 11),
+          { path: PATHS.alertas, element: <AlertasPage />, handle: titulo('Alertas') },
+          { path: '/alertas/:id', element: <AlertasPage />, handle: titulo('Alertas') },
           { path: PATHS.miCuenta, element: <MiCuentaPage />, handle: titulo('Mi cuenta') },
           { path: PATHS.sinAcceso, element: <SinAccesoPage />, handle: titulo('Mis casos') },
 
@@ -98,7 +103,11 @@ export const rutas: RouteObject[] = [
           {
             element: <RoleRoute roles={LIDER} />,
             children: [
-              pendiente('/alertas/:id/mensaje', 'Mensaje a productores', 12),
+              {
+                path: '/alertas/:id/mensaje',
+                element: <AlertaMensajePage />,
+                handle: titulo('Alertas'),
+              },
               pendiente(PATHS.mapa, 'Mapa de vigilancia', 19),
               pendiente(PATHS.reportes, 'Reportes', 23),
               {
@@ -107,8 +116,12 @@ export const rutas: RouteObject[] = [
                 handle: titulo('Productores'),
               },
               { path: PATHS.fincas, element: <FincasPage />, handle: titulo('Fincas y cultivos') },
-              pendiente(PATHS.tecnicos, 'Técnicos', 10),
-              pendiente(PATHS.parametros, 'Parámetros epidemiológicos', 13),
+              { path: PATHS.tecnicos, element: <TecnicosPage />, handle: titulo('Técnicos') },
+              {
+                path: PATHS.parametros,
+                element: <ParametrosPage />,
+                handle: titulo('Parámetros epidemiológicos'),
+              },
               pendiente(PATHS.documentacion, 'Documentación fitosanitaria', 20),
             ],
           },

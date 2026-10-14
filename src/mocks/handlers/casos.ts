@@ -275,27 +275,4 @@ export const casosHandlers = [
     if (caso.estado === 'PENDIENTE_REVISION') caso.estado = 'EN_REVISION'
     return HttpResponse.json(caso)
   }),
-
-  // Técnicos activos con su carga (para asignar). El líder también puede atender casos.
-  http.get(`${API}/tecnicos`, ({ request }) => {
-    const u = usuarioActual(request)
-    if (!u) return noAutenticado()
-    const lista = usuarios
-      .filter((x) => x.activo)
-      .sort((a, b) =>
-        a.rol === b.rol ? a.nombre.localeCompare(b.nombre) : a.rol === 'TECNICO' ? -1 : 1,
-      )
-      .map((x) => {
-        const suyos = casos.filter((c) => c.tecnico?.id === x.id)
-        return {
-          id: x.id,
-          nombre: x.nombre,
-          rol: x.rol,
-          activos: suyos.filter((c) => c.estado === 'EN_REVISION' || c.estado === 'REGISTRADO')
-            .length,
-          en_revision: suyos.filter((c) => c.estado === 'EN_REVISION').length,
-        }
-      })
-    return HttpResponse.json(lista)
-  }),
 ]

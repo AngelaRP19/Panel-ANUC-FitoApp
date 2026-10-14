@@ -1,4 +1,5 @@
 import { http, HttpResponse } from 'msw'
+import { alertas } from '../fixtures/alertas'
 import { casos } from '../fixtures/casos'
 import { usuarios } from '../fixtures/usuarios'
 import { API, noAutenticado, usuarioActual } from './comun'
@@ -16,7 +17,7 @@ export const navegacionHandlers = [
       casos_pendientes: esLider
         ? casos.filter((c) => c.estado === 'PENDIENTE_REVISION').length
         : casos.filter((c) => c.estado === 'EN_REVISION' && c.tecnico?.id === u.id).length,
-      alertas_generadas: 1,
+      alertas_generadas: alertas.filter((a) => a.estado === 'GENERADA').length,
       notificaciones_nuevas: 2,
       lider: lider ? { nombre: lider.nombre } : null,
     })
