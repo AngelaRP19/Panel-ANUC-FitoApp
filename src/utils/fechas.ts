@@ -110,6 +110,34 @@ export function parsearFechaEntrada(texto: string): string | null {
   return valida ? `${aaaa}-${mm}-${dd}` : null
 }
 
+/** Fecha de calendario en Bogotá («aaaa-mm-dd») de un instante ISO. */
+export function fechaCalendario(iso: string): string {
+  return new Date(new Date(iso).getTime() - 5 * MS_HORA).toISOString().slice(0, 10)
+}
+
+/** Suma meses a una fecha «aaaa-mm-dd»; si el día no existe en el mes destino, usa el último. */
+export function sumarMeses(fecha: string, meses: number): string {
+  const [a, m, d] = fecha.split('-').map(Number) as [number, number, number]
+  const destino = new Date(Date.UTC(a, m - 1 + meses, 1))
+  const ultimo = new Date(
+    Date.UTC(destino.getUTCFullYear(), destino.getUTCMonth() + 1, 0),
+  ).getUTCDate()
+  destino.setUTCDate(Math.min(d, ultimo))
+  return destino.toISOString().slice(0, 10)
+}
+
+/** Suma días a una fecha «aaaa-mm-dd». */
+export function sumarDias(fecha: string, dias: number): string {
+  const d = new Date(`${fecha}T00:00:00Z`)
+  d.setUTCDate(d.getUTCDate() + dias)
+  return d.toISOString().slice(0, 10)
+}
+
+/** «aaaa-mm-dd» → «22 sep 2027». */
+export function formatearDia(fecha: string | null | undefined): string {
+  return fecha ? formatearFecha(`${fecha}T12:00:00-05:00`) : '—'
+}
+
 /** «aaaa-mm-dd» → «dd/mm/aaaa» (para rellenar campos de fecha). */
 export function formatearFechaEntrada(fecha: string | null | undefined): string {
   const m = fecha ? /^(\d{4})-(\d{2})-(\d{2})/.exec(fecha) : null

@@ -48,7 +48,11 @@ interface MapaGoogleProps {
   /** Contenido encima del mapa (p. ej. la leyenda). */
   superpuesto?: ReactNode
   /** Enlace a Google Maps que se abre al hacer clic en el mapa (pestaña nueva). */
-  enlace: string
+  enlace?: string
+  /** Clic en el mapa (sin enlace), p. ej. para cerrar la ficha de un caso. */
+  onClickMapa?: () => void
+  /** «greedy»: el mapa se arrastra y acerca sin Ctrl (mapas grandes, de pantalla completa). */
+  gestos?: 'cooperative' | 'greedy'
 }
 
 /**
@@ -63,6 +67,8 @@ export function MapaGoogle({
   children,
   superpuesto,
   enlace,
+  onClickMapa,
+  gestos = 'cooperative',
 }: MapaGoogleProps) {
   const inicial = 'centro' in encuadre ? encuadre : { centro: CENTRO_ZETAQUIRA, zoom: 13 }
   return (
@@ -80,8 +86,10 @@ export function MapaGoogle({
           defaultCenter={inicial.centro}
           defaultZoom={inicial.zoom}
           mapTypeId="terrain"
-          onClick={() => window.open(enlace, '_blank', 'noopener,noreferrer')}
-          gestureHandling="cooperative"
+          onClick={() =>
+            enlace ? window.open(enlace, '_blank', 'noopener,noreferrer') : onClickMapa?.()
+          }
+          gestureHandling={gestos}
           disableDefaultUI
           zoomControl
           clickableIcons={false}
@@ -93,16 +101,18 @@ export function MapaGoogle({
         </Map>
         <EstadoCarga respaldo={respaldo} />
       </APIProvider>
-      <a
-        href={enlace}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="absolute top-2 right-2 inline-flex items-center gap-1 rounded-sm bg-blanco/95 px-2 py-1 text-nota font-semibold text-verde-700 no-underline shadow-1 hover:bg-blanco"
-      >
-        <ExternalLink size={13} aria-hidden="true" />
-        Abrir en Google Maps
-        <span className="sr-only"> (se abre en una pestaña nueva)</span>
-      </a>
+      {enlace && (
+        <a
+          href={enlace}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="absolute top-2 right-2 inline-flex items-center gap-1 rounded-sm bg-blanco/95 px-2 py-1 text-nota font-semibold text-verde-700 no-underline shadow-1 hover:bg-blanco"
+        >
+          <ExternalLink size={13} aria-hidden="true" />
+          Abrir en Google Maps
+          <span className="sr-only"> (se abre en una pestaña nueva)</span>
+        </a>
+      )}
       {superpuesto}
     </div>
   )

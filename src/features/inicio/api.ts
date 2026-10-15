@@ -1,10 +1,16 @@
 // Llamadas HTTP del feature "inicio" (pantalla de inicio del líder técnico).
 // Endpoints propuestos: GET /panel/resumen · GET /panel/casos-por-categoria?periodo=
 import { api } from '@/services/apiClient'
-import type { CasosPorCategoria, PeriodoCategorias, ResumenPanel } from './types'
+import type { CasosPorCategoria, PeriodoCategorias, ResumenPanel, ResumenTecnico } from './types'
 
 export async function obtenerResumen(): Promise<ResumenPanel> {
   const { data } = await api.get<ResumenPanel>('/panel/resumen')
+  return data
+}
+
+/** Inicio del técnico: sus casos por atender, sus cierres y sus diagnósticos recientes. */
+export async function obtenerResumenTecnico(): Promise<ResumenTecnico> {
+  const { data } = await api.get<ResumenTecnico>('/panel/resumen-tecnico')
   return data
 }
 

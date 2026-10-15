@@ -4,10 +4,14 @@ import { alertasHandlers } from './alertas'
 import { authHandlers } from './auth'
 import { casosHandlers } from './casos'
 import { consultaHandlers } from './consulta'
+import { documentosHandlers } from './documentos'
 import { fincasHandlers } from './fincas'
 import { inicioHandlers } from './inicio'
+import { mapaHandlers } from './mapa'
 import { navegacionHandlers } from './navegacion'
+import { notificacionesHandlers } from './notificaciones'
 import { productoresHandlers } from './productores'
+import { reportesHandlers } from './reportes'
 import { usuariosHandlers } from './usuarios'
 
 export const handlers = [
@@ -19,5 +23,9 @@ export const handlers = [
   ...usuariosHandlers,
   ...alertasHandlers,
   ...consultaHandlers,
+  ...notificacionesHandlers,
+  ...documentosHandlers,
+  ...mapaHandlers,
+  ...reportesHandlers,
   ...inicioHandlers,
 ]

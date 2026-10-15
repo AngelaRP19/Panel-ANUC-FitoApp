@@ -8,17 +8,18 @@ import type { CasoPendiente } from '../types'
 /** A partir de este tiempo en espera (o si no hay técnico) el caso se resalta. */
 const DIAS_ALERTA = 2
 
+/** «Más antiguos sin diagnóstico» (pendientes y en revisión): días en espera y «sin técnico». */
 export function PendientesAntiguos({ pendientes }: { pendientes: CasoPendiente[] }) {
   const ahora = new Date()
   return (
     <Card labelledBy="t-ant" className="lg:col-span-7">
       <CardHeader
         id="t-ant"
-        title="Pendientes más antiguos"
+        title="Más antiguos sin diagnóstico"
         actions={
           <>
-            <span className="text-cuerpo-sm text-tinta-terciaria">En espera de revisión</span>
-            <Link to="/casos?estado=PENDIENTE_REVISION" className="text-cuerpo-sm enlace">
+            <span className="text-cuerpo-sm text-tinta-terciaria">Días en espera</span>
+            <Link to="/casos" className="text-cuerpo-sm enlace">
               Ver casos
             </Link>
           </>
@@ -26,7 +27,7 @@ export function PendientesAntiguos({ pendientes }: { pendientes: CasoPendiente[]
       />
       {pendientes.length === 0 ? (
         <div className="p-6">
-          <EmptyState message="No hay casos pendientes de revisión." />
+          <EmptyState message="No hay casos esperando diagnóstico." />
         </div>
       ) : (
         <ul className="text-cuerpo-sm">

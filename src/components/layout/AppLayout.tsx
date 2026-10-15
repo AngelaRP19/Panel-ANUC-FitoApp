@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Outlet, useMatches } from 'react-router'
 import * as Dialog from '@radix-ui/react-dialog'
 import { X } from 'lucide-react'
@@ -19,12 +19,21 @@ export interface RouteHandle {
 interface AppLayoutProps {
   badges?: NavBadges
   notificacionesNuevas?: number
+  /** Contenido del panel de la campana (lista y acción «Marcar como leídas»). */
+  notificaciones?: ReactNode
+  notificacionesAcciones?: ReactNode
   /** Reintento periódico mientras no hay conexión (p. ej. refrescar las consultas). */
   onReintentar?: () => void
 }
 
 /** Layout del panel: barra lateral de 256 px + barra superior de 64 px + contenido. */
-export function AppLayout({ badges, notificacionesNuevas, onReintentar }: AppLayoutProps) {
+export function AppLayout({
+  badges,
+  notificacionesNuevas,
+  notificaciones,
+  notificacionesAcciones,
+  onReintentar,
+}: AppLayoutProps) {
   const [menuAbierto, setMenuAbierto] = useState(false)
   const matches = useMatches()
   const { usuario } = useAuth()
@@ -73,6 +82,8 @@ export function AppLayout({ badges, notificacionesNuevas, onReintentar }: AppLay
           titulo={titulo}
           onMenu={() => setMenuAbierto(true)}
           notificacionesNuevas={notificacionesNuevas}
+          notificaciones={notificaciones}
+          notificacionesAcciones={notificacionesAcciones}
         />
         <OfflineBanner onRetry={onReintentar} />
         <main

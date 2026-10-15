@@ -30,25 +30,66 @@ export function MarcadorCaso({
   categoria,
   codigo,
   titulo,
+  conEtiqueta = true,
+  onClick,
 }: {
   posicion: google.maps.LatLngLiteral
   categoria: string
   codigo: string
   titulo: string
+  /** Número encima del marcador (en mapas con muchos casos se puede omitir). */
+  conEtiqueta?: boolean
+  /** Por defecto abre Google Maps en el punto. */
+  onClick?: () => void
 }) {
   return (
     <Marker
       position={posicion}
       icon={iconoCategoria(categoria)}
       title={titulo}
-      onClick={() => abrir(urlGoogleMapsPunto(posicion))}
-      label={{
-        text: `#${codigo}`,
-        color: colorToken('tinta', '#16241b'),
-        fontFamily: 'JetBrains Mono Variable, JetBrains Mono, monospace',
-        fontSize: '12px',
-        fontWeight: '600',
-      }}
+      onClick={onClick ?? (() => abrir(urlGoogleMapsPunto(posicion)))}
+      label={
+        conEtiqueta
+          ? {
+              text: `#${codigo}`,
+              color: colorToken('tinta', '#16241b'),
+              fontFamily: 'JetBrains Mono Variable, JetBrains Mono, monospace',
+              fontSize: '12px',
+              fontWeight: '600',
+            }
+          : undefined
+      }
+    />
+  )
+}
+
+/** Escala de concentración 1-4 (tokens calor-1 a calor-4). */
+const CALOR: Record<number, [string, string]> = {
+  1: ['calor-1', '#e5f4ea'],
+  2: ['calor-2', '#f2d27a'],
+  3: ['calor-3', '#e38a3f'],
+  4: ['calor-4', '#b42318'],
+}
+
+/** Mancha de concentración alrededor de un caso (capa de concentración del mapa). */
+export function CirculoConcentracion({
+  centro,
+  nivel,
+  radioM = 600,
+}: {
+  centro: google.maps.LatLngLiteral
+  nivel: number
+  radioM?: number
+}) {
+  const color = colorToken(...(CALOR[nivel] ?? CALOR[1]!))
+  return (
+    <Circle
+      center={centro}
+      radius={radioM}
+      strokeOpacity={0}
+      fillColor={color}
+      fillOpacity={nivel >= 3 ? 0.42 : 0.3}
+      clickable={false}
     />
   )
 }

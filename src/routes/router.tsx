@@ -7,15 +7,18 @@ import AlertasPage from '@/pages/AlertasPage'
 import CasoDetallePage from '@/pages/CasoDetallePage'
 import CasosPage from '@/pages/CasosPage'
 import ConsultaPage from '@/pages/ConsultaPage'
-import EnConstruccionPage from '@/pages/EnConstruccionPage'
+import DocumentacionPage from '@/pages/DocumentacionPage'
 import FincasPage from '@/pages/FincasPage'
 import LoginPage from '@/pages/LoginPage'
+import MapaPage from '@/pages/MapaPage'
 import MiCuentaPage from '@/pages/MiCuentaPage'
 import NotFoundPage from '@/pages/NotFoundPage'
 import ParametrosPage from '@/pages/ParametrosPage'
 import PrimerUsoPage from '@/pages/PrimerUsoPage'
 import ProductoresPage from '@/pages/ProductoresPage'
 import RecuperarCuentaPage from '@/pages/RecuperarCuentaPage'
+import ReporteDetallePage from '@/pages/ReporteDetallePage'
+import ReportesPage from '@/pages/ReportesPage'
 import SinAccesoPage from '@/pages/SinAccesoPage'
 import TecnicosPage from '@/pages/TecnicosPage'
 import { Rol } from '@/types/enums'
@@ -31,15 +34,6 @@ import { RoleRoute } from './RoleRoute'
 const DevUiPage = import.meta.env.DEV ? lazy(() => import('@/pages/DevUiPage')) : null
 
 const titulo = (t: string): RouteHandle => ({ titulo: t })
-
-/** Ruta aún sin desarrollar: muestra «Pantalla en construcción». */
-function pendiente(path: string, nombre: string, pantalla: number): RouteObject {
-  return {
-    path,
-    element: <EnConstruccionPage titulo={nombre} pantalla={pantalla} />,
-    handle: titulo(nombre),
-  }
-}
 
 function conSuspense(elemento: ReactNode) {
   return (
@@ -115,8 +109,13 @@ export const rutas: RouteObject[] = [
                 element: <AlertaMensajePage />,
                 handle: titulo('Alertas'),
               },
-              pendiente(PATHS.mapa, 'Mapa de vigilancia', 19),
-              pendiente(PATHS.reportes, 'Reportes', 23),
+              { path: PATHS.mapa, element: <MapaPage />, handle: titulo('Mapa de vigilancia') },
+              { path: PATHS.reportes, element: <ReportesPage />, handle: titulo('Reportes') },
+              {
+                path: `${PATHS.reportes}/:tipo`,
+                element: <ReporteDetallePage />,
+                handle: titulo('Reportes'),
+              },
               {
                 path: PATHS.productores,
                 element: <ProductoresPage />,
@@ -129,7 +128,11 @@ export const rutas: RouteObject[] = [
                 element: <ParametrosPage />,
                 handle: titulo('Parámetros epidemiológicos'),
               },
-              pendiente(PATHS.documentacion, 'Documentación fitosanitaria', 20),
+              {
+                path: PATHS.documentacion,
+                element: <DocumentacionPage />,
+                handle: titulo('Documentación'),
+              },
             ],
           },
         ],

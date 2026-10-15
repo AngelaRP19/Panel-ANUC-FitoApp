@@ -1,15 +1,18 @@
-// Contrato propuesto para el resumen del inicio (el CONTEXTO aún no define estos endpoints).
+// Contrato propuesto para el inicio del líder (pantalla 16): GET /panel/resumen y
+// GET /panel/casos-por-categoria (solo líder).
 // TODO: reemplazar por los tipos de '@/types/api' cuando el backend publique el OpenAPI.
-import type { Categoria, EstadoAlerta } from '@/types/enums'
+import type { Categoria, EstadoAlerta, EstadoCaso, ResultadoTecnico } from '@/types/enums'
 
 export interface ResumenPanel {
   /** Momento en que se calcularon los datos (UTC). */
   generado_en: string
   kpis: {
+    /** Pendientes de revisión: sin técnico asignado. */
     pendientes_revision: number
     /** Pendientes con más de 48 h desde que llegaron al panel. */
     pendientes_mas_48h: number
-    en_analisis_tecnico: number
+    /** En revisión: con técnico asignado y sin diagnóstico. */
+    en_revision: number
     /** Casos cerrados en el mes de `generado_en`, por resultado técnico. */
     cerrados_mes: {
       total: number
@@ -22,7 +25,7 @@ export interface ResumenPanel {
     proximos_a_vencer: number
     dias_aviso_vencimiento: number
   }
-  /** Casos PENDIENTE_REVISION más antiguos (por enviado_a_panel_en ascendente). */
+  /** Casos sin diagnóstico (pendientes y en revisión) más antiguos, por envío ascendente. */
   pendientes_antiguos: CasoPendiente[]
   pendientes_sin_tecnico: number
   alertas: {
@@ -56,12 +59,45 @@ export interface AlertaReciente {
 export interface CargaTecnico {
   tecnico_id: string
   nombre: string
-  /** PENDIENTE_REVISION + ANALISIS_TECNICO asignados. */
+  /** Casos activos: en revisión y registrados sin cerrar. */
   activos: number
-  pendientes: number
+  /** En revisión (sin diagnóstico). */
+  en_revision: number
 }
 
 export type PeriodoCategorias = '30d' | '90d' | 'anio'
+
+/** Inicio del técnico (pantalla 17 · GET /panel/resumen-tecnico): solo sus casos. */
+export interface ResumenTecnico {
+  generado_en: string
+  nombre: string
+  /** Líder técnico activo, para pedirle un caso que no aparece. */
+  lider_nombre: string | null
+  kpis: {
+    en_revision: number
+    en_revision_mas_48h: number
+    /** Ids de sus casos con diagnóstico guardado y sin cerrar. */
+    registrados_sin_cerrar: string[]
+    cerrados_mes: ResumenPanel['kpis']['cerrados_mes']
+    proximos_a_vencer: number
+    dias_aviso_vencimiento: number
+  }
+  /** En revisión (los que más esperan primero) y luego registrados sin cerrar. */
+  por_atender: {
+    id: string
+    productor_nombre: string
+    estado: EstadoCaso
+    enviado_a_panel_en: string | null
+    /** Lleva más de 48 h en espera (se resalta). */
+    mas_48h: boolean
+  }[]
+  diagnosticos_recientes: {
+    caso_id: string
+    resultado_tecnico: ResultadoTecnico
+    categoria: Categoria | null
+    registrado_en: string
+  }[]
+}
 
 export interface CasosPorCategoria {
   periodo: PeriodoCategorias

@@ -38,6 +38,8 @@ export interface CasoFixture {
   diagnostico?: DiagnosticoFixture | null
   /** Fecha real de cierre (cuando se cierra desde el panel). */
   cerrado_en?: string | null
+  /** Extensiones de conservación hechas desde el panel (pantalla 22). */
+  extensiones?: { por: string; en: string; justificacion: string; vence_en: string }[]
 }
 
 export interface DiagnosticoFixture {

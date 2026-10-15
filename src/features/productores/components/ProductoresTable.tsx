@@ -39,26 +39,75 @@ const COLUMNAS: Column<Productor>[] = [
   },
 ]
 
+const CASILLA = 'm-0 size-4.5 cursor-pointer accent-verde-700'
+
+/** Selección para las acciones masivas (pantalla 21). Persiste entre páginas. */
+export interface SeleccionProductores {
+  ids: ReadonlySet<string>
+  onCambiar: (p: Productor, marcado: boolean) => void
+  onCambiarPagina: (productores: Productor[], marcado: boolean) => void
+}
+
 interface ProductoresTableProps {
   productores: Productor[]
   cargando: boolean
   seleccionado: string | null
   onAbrir: (p: Productor) => void
   vacio: ReactNode
+  seleccion?: SeleccionProductores
 }
 
-/** Tabla de productores (artboard 08): Nombre, WhatsApp, Vereda, Finca y Estado. */
+/**
+ * Tabla de productores (artboards 08, 08c): Nombre, WhatsApp, Vereda, Finca y Estado. Con
+ * `seleccion`, cada fila lleva una casilla (y el encabezado, la de toda la página).
+ */
 export function ProductoresTable({
   productores,
   cargando,
   seleccionado,
   onAbrir,
   vacio,
+  seleccion,
 }: ProductoresTableProps) {
+  const todos = productores.length > 0 && productores.every((p) => seleccion?.ids.has(p.id))
+  const algunos = productores.some((p) => seleccion?.ids.has(p.id))
+  const columnas: Column<Productor>[] = seleccion
+    ? [
+        {
+          key: 'sel',
+          width: '52px',
+          skeletonWidth: '18px',
+          header: (
+            <input
+              type="checkbox"
+              className={CASILLA}
+              aria-label="Seleccionar todos los productores de esta página"
+              checked={todos}
+              ref={(el) => {
+                if (el) el.indeterminate = algunos && !todos
+              }}
+              onChange={(e) => seleccion.onCambiarPagina(productores, e.target.checked)}
+            />
+          ),
+          render: (p) => (
+            <input
+              type="checkbox"
+              className={CASILLA}
+              aria-label={`Seleccionar a ${p.nombre}`}
+              checked={seleccion.ids.has(p.id)}
+              onClick={(e) => e.stopPropagation()}
+              onChange={(e) => seleccion.onCambiar(p, e.target.checked)}
+            />
+          ),
+        },
+        ...COLUMNAS,
+      ]
+    : COLUMNAS
+
   return (
     <Table
       label="Productores registrados"
-      columns={COLUMNAS}
+      columns={columnas}
       rows={productores}
       rowKey={(p) => p.id}
       loading={cargando}
