@@ -8,9 +8,14 @@ const LIDER = 'lider@anuc.test'
 
 // jsdom no implementa URL.createObjectURL: se captura el archivo descargado.
 let archivos: Blob[] = []
-const originales = { crear: URL.createObjectURL, liberar: URL.revokeObjectURL }
+const originales = {
+  crear: URL.createObjectURL,
+  liberar: URL.revokeObjectURL,
+  imprimir: window.print,
+}
 beforeEach(() => {
   archivos = []
+  window.print = vi.fn()
   URL.createObjectURL = vi.fn((b: Blob | MediaSource) => {
     archivos.push(b as Blob)
     return 'blob:prueba'
@@ -20,6 +25,7 @@ beforeEach(() => {
 afterEach(() => {
   URL.createObjectURL = originales.crear
   URL.revokeObjectURL = originales.liberar
+  window.print = originales.imprimir
 })
 
 const CASOS: [string, string, string, string, string][] = [
@@ -123,15 +129,48 @@ describe('Reportes R1-R5 (pantalla 24)', () => {
     expect(router.state.location.search).toContain('periodo=anio')
   })
 
-  it('exporta el reporte en CSV con la tabla principal y en PDF', async () => {
-    const { user } = await renderApp(LIDER, '/reportes/casos')
+  it('exporta el reporte en CSV (todas las secciones) y en PDF con el formato del ejemplo', async () => {
+    const { user } = await renderApp(
+      LIDER,
+      '/reportes/casos?periodo=personalizado&desde=2026-09-01&hasta=2026-09-30&vereda=JURACAMBITA',
+    )
     await screen.findByText('Recibidos')
     await user.click(screen.getByRole('button', { name: 'Exportar CSV' }))
     expect(await screen.findByText('CSV descargado')).toBeInTheDocument()
     expect(archivos[0]!.type).toContain('text/csv')
+    const csv = await archivos[0]!.text()
+    expect(csv.split('\r\n')[0]).toBe('Reporte de casos y estados')
+    expect(csv).toContain('Vereda;Juracambita')
+    expect(csv).toContain('Casos por estado')
+    expect(csv).toContain('Caso;Recibido;Productor;Vereda;Preliminar;Estado;Técnico')
+
     await user.click(screen.getByRole('button', { name: 'Descargar PDF' }))
-    expect(await screen.findByText('PDF descargado')).toBeInTheDocument()
-    expect(archivos[1]!.type).toBe('application/pdf')
+    await waitFor(() => expect(window.print).toHaveBeenCalledTimes(1))
+    expect(document.title).toBe('Reporte_casos_septiembre_2026')
+    const documento = screen.getByRole('document', { hidden: true })
+    expect(documento).toHaveAccessibleName('Documento para imprimir: Reporte de casos y estados')
+    // Chips como en el ejemplo: periodo y filtros principales con «todas/todos».
+    for (const chip of [
+      'Periodo: 01/09/2026 – 30/09/2026',
+      'Vereda: Juracambita',
+      'Especie: todas',
+      'Técnico: todos',
+      'Estados: todos',
+    ]) {
+      expect(
+        within(documento).getByText((_, el) => el?.tagName === 'LI' && el.textContent === chip),
+      ).toBeInTheDocument()
+    }
+    expect(
+      within(documento).getByRole('heading', { name: 'Anexo · Casos del periodo', hidden: true }),
+    ).toBeInTheDocument()
+    // Encabezado y pie de cada página (reglas @page del documento).
+    expect(documento.querySelector('style')!.textContent).toContain(
+      'Reporte de casos y estados · septiembre de 2026',
+    )
+    expect(documento.querySelector('style')!.textContent).toContain('counter(pages)')
+    window.dispatchEvent(new Event('afterprint'))
+    await waitFor(() => expect(screen.queryByRole('document', { hidden: true })).toBeNull())
   })
 
   it('desde el panel se guarda la consulta con el reporte elegido', async () => {

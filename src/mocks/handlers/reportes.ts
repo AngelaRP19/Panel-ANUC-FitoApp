@@ -11,7 +11,6 @@ import type {
   ReporteDatos,
   ResumenReportes,
   SeccionReporte,
-  SeccionTabla,
   TipoReporte,
 } from '@/features/reportes/types'
 import { esTipoReporte, lista, rangoPeriodo, REPORTES } from '@/features/reportes/utils'
@@ -20,7 +19,6 @@ import { alertas, parametros, type AlertaFixture } from '../fixtures/alertas'
 import { casos, type CasoFixture } from '../fixtures/casos'
 import { consultas, type ConsultaFixture } from '../fixtures/consultas'
 import { cerradoEn, diagnosticoDe } from '../fixtures/detalle'
-import { pdfDeEjemplo } from '../fixtures/documentos'
 import { fincas } from '../fixtures/fincas'
 import { productores } from '../fixtures/productores'
 import { usuarios } from '../fixtures/usuarios'
@@ -181,7 +179,7 @@ const filaCaso = (c: CasoFixture) => ({
     ? '—'
     : c.preliminar.resultado === 'NO_IDENTIFICADO'
       ? 'No identificada'
-      : `${CATEGORIA[c.preliminar.categoria!]} ${c.preliminar.porcentaje} %`,
+      : `${CATEGORIA[c.preliminar.categoria!]} · ${c.preliminar.porcentaje} %`,
   estado: ESTADO[c.estado],
   tecnico: c.tecnico?.nombre ?? 'Sin técnico',
 })
@@ -1322,24 +1320,6 @@ function resumen(f: FiltrosReporte): ResumenReportes {
   }
 }
 
-// ── Exportación ───────────────────────────────────────────────────────────────────────
-const celdaCsv = (v: string | number) => {
-  const t = String(v)
-  return /[",;\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t
-}
-function csvDe(tablas: SeccionTabla[]) {
-  const bloques = tablas.map((t) =>
-    [
-      t.titulo,
-      t.columnas.map((c) => celdaCsv(c.titulo)).join(','),
-      ...t.filas.map((f) => t.columnas.map((c) => celdaCsv(f[c.clave] ?? '')).join(',')),
-    ].join('\r\n'),
-  )
-  return '﻿' + bloques.join('\r\n\r\n')
-}
-const tablaPrincipal = (r: { secciones: SeccionReporte[] }) =>
-  r.secciones.filter((s): s is SeccionTabla => s.tipo === 'tabla' && s.id === 'principal')
-
 function filtrosDe(request: Request): FiltrosReporte {
   return Object.fromEntries(new URL(request.url).searchParams.entries())
 }
@@ -1424,45 +1404,6 @@ export const reportesHandlers = [
     if (i < 0) return errorApi(404, 'NO_ENCONTRADO', 'La consulta no existe.')
     consultas.splice(i, 1)
     return new HttpResponse(null, { status: 204 })
-  }),
-
-  // CSV y PDF: «resumen» o cualquiera de los cinco reportes, con los mismos filtros.
-  http.get(`${API}/reportes/:tipo/exportar`, ({ request, params }) => {
-    const bloqueo = soloLider(request)
-    if (bloqueo) return bloqueo
-    const tipo = String(params.tipo)
-    const f = filtrosDe(request)
-    const formato = f.formato === 'pdf' ? 'pdf' : 'csv'
-    delete f.formato
-    const datos =
-      tipo === 'resumen' ? resumen(f) : esTipoReporte(tipo) ? GENERADORES[tipo](f) : null
-    if (!datos) return errorApi(404, 'NO_ENCONTRADO', 'El reporte no existe.')
-    const titulo = 'titulo' in datos ? datos.titulo : 'Reportes · resumen'
-    const tablas =
-      tipo === 'resumen'
-        ? datos.secciones.filter((s): s is SeccionTabla => s.tipo === 'tabla')
-        : tablaPrincipal(datos)
-    if (formato === 'csv') {
-      return new HttpResponse(csvDe(tablas), {
-        headers: { 'Content-Type': 'text/csv; charset=utf-8' },
-      })
-    }
-    const lineas = [
-      datos.subtitulo,
-      '',
-      ...datos.kpis.map((k) => `${k.rotulo}: ${k.valor} (${k.pie})`),
-      '',
-      ...tablas.flatMap((t) => [
-        t.titulo,
-        ...t.filas
-          .slice(0, 20)
-          .map((fila) => t.columnas.map((c) => fila[c.clave] ?? '').join(' | ')),
-        '',
-      ]),
-    ]
-    return new HttpResponse(pdfDeEjemplo(titulo, lineas), {
-      headers: { 'Content-Type': 'application/pdf' },
-    })
   }),
 
   http.get(`${API}/reportes/:tipo`, ({ request, params }) => {

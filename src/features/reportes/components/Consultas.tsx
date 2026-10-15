@@ -14,7 +14,7 @@ import { toast } from '@/components/ui/Toast'
 import { MENSAJES } from '@/locales/es'
 import { esErrorApi } from '@/services/apiClient'
 import { cn } from '@/utils/cn'
-import { useConsultas, useEliminarConsulta, useExportarReporte, useGuardarConsulta } from '../hooks'
+import { useConsultas, useEliminarConsulta, useExportarCsv, useGuardarConsulta } from '../hooks'
 import type {
   ConsultaGuardada,
   FiltrosReporte,
@@ -246,7 +246,7 @@ export function GuardarConsultaModal({
 /** «Consultas guardadas» (artboards 13 y R0): ver resultado, CSV y eliminar. */
 export function ConsultasGuardadas({ onGuardarActuales }: { onGuardarActuales: () => void }) {
   const { data, isPending, isError, refetch } = useConsultas()
-  const exportar = useExportarReporte()
+  const exportar = useExportarCsv()
   const eliminar = useEliminarConsulta()
   const [borrar, setBorrar] = useState<ConsultaGuardada | null>(null)
   const [pagina, setPagina] = useState(1)
@@ -314,7 +314,7 @@ export function ConsultasGuardadas({ onGuardarActuales }: { onGuardarActuales: (
                 aria-label={`Descargar CSV de ${c.nombre}`}
                 onClick={() =>
                   exportar.mutate(
-                    { tipo: c.tipo, filtros: c.filtros, formato: 'csv' },
+                    { tipo: c.tipo, filtros: c.filtros },
                     {
                       onError: () =>
                         toast.error('No se descargó el CSV', MENSAJES.errorConexionTexto),

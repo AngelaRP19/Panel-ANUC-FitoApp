@@ -1,7 +1,8 @@
 // Llamadas HTTP del feature "reportes" (pantallas 23 y 24 · solo líder).
-// Endpoints: GET /reportes/resumen · GET /reportes/{tipo} · GET /reportes/{tipo|resumen}/exportar
-//            ?formato=csv|pdf · GET/POST /reportes/consultas · DELETE /reportes/consultas/{id}
+// Endpoints: GET /reportes/resumen · GET /reportes/{tipo} · GET/POST /reportes/consultas ·
+//            DELETE /reportes/consultas/{id}
 // Todos reciben los filtros como parámetros de consulta (listas separadas por coma).
+// El CSV y el PDF se arman en el navegador con estos mismos datos (ver exportar.ts).
 import { api } from '@/services/apiClient'
 import type {
   ConsultaGuardada,
@@ -22,18 +23,6 @@ export async function obtenerResumen(f: FiltrosReporte): Promise<ResumenReportes
 
 export async function obtenerReporte(tipo: TipoReporte, f: FiltrosReporte): Promise<ReporteDatos> {
   const { data } = await api.get<ReporteDatos>(`/reportes/${tipo}`, { params: params(f) })
-  return data
-}
-
-export async function exportarReporte(
-  tipo: TipoReporte | 'resumen',
-  f: FiltrosReporte,
-  formato: 'csv' | 'pdf',
-): Promise<Blob> {
-  const { data } = await api.get<Blob>(`/reportes/${tipo}/exportar`, {
-    params: { ...params(f), formato },
-    responseType: 'blob',
-  })
   return data
 }
 

@@ -9,9 +9,14 @@ const seccionConsultas = () => screen.getByRole('region', { name: 'Consultas gua
 
 // jsdom no implementa URL.createObjectURL: se captura el archivo descargado.
 let archivos: Blob[] = []
-const originales = { crear: URL.createObjectURL, liberar: URL.revokeObjectURL }
+const originales = {
+  crear: URL.createObjectURL,
+  liberar: URL.revokeObjectURL,
+  imprimir: window.print,
+}
 beforeEach(() => {
   archivos = []
+  window.print = vi.fn()
   URL.createObjectURL = vi.fn((b: Blob | MediaSource) => {
     archivos.push(b as Blob)
     return 'blob:prueba'
@@ -21,6 +26,7 @@ beforeEach(() => {
 afterEach(() => {
   URL.createObjectURL = originales.crear
   URL.revokeObjectURL = originales.liberar
+  window.print = originales.imprimir
 })
 
 describe('Reportes · resumen (pantalla 23)', () => {
@@ -103,15 +109,40 @@ describe('Reportes · resumen (pantalla 23)', () => {
     expect(router.state.location.search).toContain('resultado=CONFIRMADO')
   })
 
-  it('exporta el resumen en CSV y PDF', async () => {
-    const { user } = await renderApp(LIDER, '/reportes')
+  it('exporta el resumen en CSV para Excel (punto y coma, tildes) y en PDF (impresión)', async () => {
+    const { user } = await renderApp(
+      LIDER,
+      '/reportes?periodo=personalizado&desde=2026-09-01&hasta=2026-09-30',
+    )
     await screen.findByText('Casos recibidos')
     await user.click(screen.getByRole('button', { name: 'Exportar CSV' }))
     expect(await screen.findByText('CSV descargado')).toBeInTheDocument()
-    expect(await archivos[0]!.text()).toContain('Casos por vereda')
+    const bytes = new Uint8Array(await archivos[0]!.arrayBuffer())
+    expect([...bytes.slice(0, 3)]).toEqual([0xef, 0xbb, 0xbf]) // BOM: Excel lee bien las tildes
+    const csv = await archivos[0]!.text()
+    expect(csv).toContain('Resumen de reportes\r\n')
+    expect(csv).toContain('Periodo;01/09/2026 – 30/09/2026')
+    expect(csv).toContain('Indicador;Valor;Detalle')
+    expect(csv).toContain('Vereda;Casos;Confirmados')
+    expect(csv).toContain('Casos por vereda')
+
+    const tituloAnterior = document.title
     await user.click(screen.getByRole('button', { name: 'Descargar PDF' }))
-    expect(await screen.findByText('PDF descargado')).toBeInTheDocument()
-    expect(archivos[1]!.type).toBe('application/pdf')
+    await waitFor(() => expect(window.print).toHaveBeenCalledTimes(1))
+    const documento = screen.getByRole('document', {
+      name: 'Documento para imprimir: Resumen de reportes',
+      hidden: true,
+    })
+    expect(document.title).toBe('Reportes_resumen_septiembre_2026')
+    expect(documento).toHaveTextContent('Periodo del 01/09/2026 al 30/09/2026')
+    expect(documento).toHaveTextContent('Generado el')
+    expect(documento).toHaveTextContent('por Wilmar Torres · líder técnico')
+    expect(documento).toHaveTextContent('Casos recibidos')
+    expect(documento).toHaveTextContent('Reportes del periodo')
+    // Al cerrar el diálogo de impresión se quita el documento y vuelve el título.
+    window.dispatchEvent(new Event('afterprint'))
+    await waitFor(() => expect(screen.queryByRole('document', { hidden: true })).toBeNull())
+    expect(document.title).toBe(tituloAnterior)
   })
 
   it('guarda los filtros actuales como consulta (F5) y la elimina', async () => {

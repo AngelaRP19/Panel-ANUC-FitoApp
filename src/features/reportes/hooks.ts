@@ -5,15 +5,21 @@ import { useOpcionesFiltroCasos } from '@/features/casos'
 import { useTodosProductores } from '@/features/productores'
 import { useCuentas } from '@/features/usuarios'
 import { useUrlFilters } from '@/hooks/useUrlFilters'
-import { nombreConFecha } from '@/utils/descarga'
+import { descargarTexto } from '@/utils/descarga'
 import {
   eliminarConsulta,
-  exportarReporte,
   guardarConsulta,
   listarConsultas,
   obtenerReporte,
   obtenerResumen,
 } from './api'
+import {
+  csvDeDocumento,
+  documentoDeReporte,
+  documentoDeResumen,
+  textoGenerado,
+  type DocumentoExportable,
+} from './exportar'
 import type { FiltrosReporte, TipoReporte } from './types'
 import { CLAVES_REPORTES } from './utils'
 
@@ -54,29 +60,52 @@ export function useReporte(tipo: TipoReporte, f: FiltrosReporte, enabled = true)
   })
 }
 
-/** Descarga el CSV o el PDF del reporte con los filtros aplicados. */
-export function useExportarReporte() {
+interface PedidoExportar {
+  tipo: TipoReporte | 'resumen'
+  filtros: FiltrosReporte
+}
+
+/** Arma el documento exportable con los datos del reporte (de la caché si ya se cargaron). */
+function useDocumento() {
+  const queryClient = useQueryClient()
+  const nombres = useNombresFiltros()
+  return async ({ tipo, filtros }: PedidoExportar): Promise<DocumentoExportable> => {
+    if (tipo === 'resumen') {
+      const datos = await queryClient.fetchQuery({
+        queryKey: reportesKeys.resumen(filtros),
+        queryFn: () => obtenerResumen(filtros),
+        staleTime: 60_000,
+      })
+      return documentoDeResumen(datos, filtros, nombres)
+    }
+    const datos = await queryClient.fetchQuery({
+      queryKey: reportesKeys.reporte(tipo, filtros),
+      queryFn: () => obtenerReporte(tipo, filtros),
+      staleTime: 60_000,
+    })
+    return documentoDeReporte(datos, filtros, nombres)
+  }
+}
+
+/** Descarga el CSV del reporte (punto y coma, para Excel en español) con los filtros dados. */
+export function useExportarCsv() {
+  const documento = useDocumento()
   return useMutation({
-    mutationFn: async ({
-      tipo,
-      filtros,
-      formato,
-    }: {
-      tipo: TipoReporte | 'resumen'
-      filtros: FiltrosReporte
-      formato: 'csv' | 'pdf'
-    }) => {
-      const archivo = await exportarReporte(tipo, filtros, formato)
-      const url = URL.createObjectURL(archivo)
-      const enlace = document.createElement('a')
-      enlace.href = url
-      enlace.download = nombreConFecha(`reporte-${tipo}`, formato)
-      document.body.appendChild(enlace)
-      enlace.click()
-      enlace.remove()
-      setTimeout(() => URL.revokeObjectURL(url), 0)
+    mutationFn: async (pedido: PedidoExportar) => {
+      const d = await documento(pedido)
+      descargarTexto(
+        csvDeDocumento(d, textoGenerado()),
+        `${d.nombreArchivo}.csv`,
+        'text/csv;charset=utf-8',
+      )
     },
   })
+}
+
+/** Prepara el documento para imprimir o guardar como PDF. */
+export function usePrepararPdf() {
+  const documento = useDocumento()
+  return useMutation({ mutationFn: documento })
 }
 
 /** Nombres legibles de los filtros con id (técnico, finca, «decidida por») para los chips. */

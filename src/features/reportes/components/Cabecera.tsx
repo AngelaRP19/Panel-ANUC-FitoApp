@@ -1,15 +1,22 @@
+import { useState } from 'react'
 import { Link } from 'react-router'
 import { CalendarDays, Download, FileDown, SlidersHorizontal } from 'lucide-react'
 import { Button, buttonClass } from '@/components/ui/Button'
 import { FilterChip } from '@/components/ui/Chip'
 import { toast } from '@/components/ui/Toast'
+import { useAuth } from '@/context/AuthContext'
 import { MENSAJES } from '@/locales/es'
 import { cn } from '@/utils/cn'
-import { useExportarReporte } from '../hooks'
+import { textoGenerado, type DocumentoExportable } from '../exportar'
+import { useExportarCsv, usePrepararPdf } from '../hooks'
+import { DocumentoImpresion } from './DocumentoImpresion'
 import type { FiltrosReporte, PanelFiltros, TarjetaReporte, TipoReporte } from '../types'
 import { filtrosActivos, PANELES, REPORTES, textoPeriodo, urlReporte } from '../utils'
 
-/** Botones «Exportar CSV» y «Descargar PDF» con los filtros aplicados. */
+/**
+ * «Exportar CSV» (descarga directa, lista para Excel) y «Descargar PDF» (abre la impresión con
+ * el formato del reporte; en el diálogo se elige «Guardar como PDF»).
+ */
 export function BotonesExportar({
   tipo,
   filtros,
@@ -17,30 +24,57 @@ export function BotonesExportar({
   tipo: TipoReporte | 'resumen'
   filtros: FiltrosReporte
 }) {
-  const exportar = useExportarReporte()
-  const descargar = (formato: 'csv' | 'pdf') =>
-    exportar.mutate(
-      { tipo, filtros, formato },
-      {
-        onSuccess: () =>
-          toast.exito(
-            formato === 'csv' ? 'CSV descargado' : 'PDF descargado',
-            'Con los filtros aplicados.',
-          ),
-        onError: () => toast.error('No se descargó el archivo', MENSAJES.errorConexionTexto),
-      },
-    )
-  const cargando = (f: 'csv' | 'pdf') => exportar.isPending && exportar.variables?.formato === f
+  const { usuario } = useAuth()
+  const csv = useExportarCsv()
+  const pdf = usePrepararPdf()
+  const [imprimir, setImprimir] = useState<{ doc: DocumentoExportable; generado: string } | null>(
+    null,
+  )
+  const error = () => toast.error('No se pudo preparar el archivo', MENSAJES.errorConexionTexto)
+  const autor = usuario
+    ? `${usuario.nombre} · ${usuario.rol === 'LIDER_TECNICO' ? 'líder técnico' : 'técnico'}`
+    : 'Panel fitosanitario'
   return (
     <>
-      <Button variant="secondary" onClick={() => descargar('csv')} loading={cargando('csv')}>
+      <Button
+        variant="secondary"
+        loading={csv.isPending}
+        onClick={() =>
+          csv.mutate(
+            { tipo, filtros },
+            {
+              onSuccess: () => toast.exito('CSV descargado', 'Con los filtros aplicados.'),
+              onError: error,
+            },
+          )
+        }
+      >
         <Download aria-hidden="true" />
         Exportar CSV
       </Button>
-      <Button onClick={() => descargar('pdf')} loading={cargando('pdf')}>
+      <Button
+        loading={pdf.isPending || !!imprimir}
+        onClick={() =>
+          pdf.mutate(
+            { tipo, filtros },
+            {
+              onSuccess: (doc) => setImprimir({ doc, generado: textoGenerado() }),
+              onError: error,
+            },
+          )
+        }
+      >
         <FileDown aria-hidden="true" />
         Descargar PDF
       </Button>
+      {imprimir && (
+        <DocumentoImpresion
+          documento={imprimir.doc}
+          generado={imprimir.generado}
+          autor={autor}
+          onTerminar={() => setImprimir(null)}
+        />
+      )}
     </>
   )
 }
