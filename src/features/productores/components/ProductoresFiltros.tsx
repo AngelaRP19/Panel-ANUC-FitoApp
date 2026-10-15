@@ -2,6 +2,7 @@ import { useState, type ReactNode } from 'react'
 import { AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { FilterChip } from '@/components/ui/Chip'
+import { EntradaFecha } from '@/components/ui/EntradaFecha'
 import { controlClass } from '@/components/ui/Input'
 import { ESPECIE_LABEL, MENSAJES, VEREDA_LABEL, etiqueta } from '@/locales/es'
 import { cn } from '@/utils/cn'
@@ -177,17 +178,20 @@ export function ProductoresFiltros({ filtros, onCambiar }: ProductoresFiltrosPro
             </>
           }
         >
-          <input
+          <EntradaFecha
             id={`pf-${k}`}
-            inputMode="numeric"
-            placeholder="dd/mm/aaaa"
             value={fechas[k]}
             onChange={(e) => setFechas((f) => ({ ...f, [k]: e.target.value }))}
             onBlur={() => aplicarFecha(k)}
             onKeyDown={(e) => e.key === 'Enter' && aplicarFecha(k)}
-            aria-invalid={!!errores[k] || undefined}
+            onElegirFecha={(fecha) => {
+              setFechas((f) => ({ ...f, [k]: formatearFechaEntrada(fecha) }))
+              setErrores((e) => ({ ...e, [k]: undefined }))
+              onCambiar({ [k]: fecha })
+            }}
+            invalid={!!errores[k]}
             aria-describedby={errores[k] ? `pf-${k}-error` : undefined}
-            className={cn(controlClass, 'h-9 text-cuerpo-sm tabular-nums')}
+            className="h-9 text-cuerpo-sm"
           />
         </Campo>
       ))}

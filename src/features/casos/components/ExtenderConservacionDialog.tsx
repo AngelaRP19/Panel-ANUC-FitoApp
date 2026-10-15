@@ -4,8 +4,8 @@ import { ArchiveRestore } from 'lucide-react'
 import { z } from 'zod'
 import { Aviso } from '@/components/ui/Aviso'
 import { Button } from '@/components/ui/Button'
+import { EntradaFecha } from '@/components/ui/EntradaFecha'
 import { fieldDescriptionId, FormField, RequiredLegend } from '@/components/ui/FormField'
-import { Input } from '@/components/ui/Input'
 import { Modal } from '@/components/ui/Modal'
 import { Select } from '@/components/ui/Select'
 import { Textarea } from '@/components/ui/Textarea'
@@ -17,6 +17,7 @@ import {
   formatearDia,
   formatearFechaEntrada,
   parsearFechaEntrada,
+  sumarDias,
   sumarMeses,
 } from '@/utils/fechas'
 import { useExtenderConservacion } from '../hooks'
@@ -87,7 +88,7 @@ export function ExtenderConservacionDialog({
     control,
     setValue,
     setError,
-    formState: { errors },
+    formState: { errors, isSubmitted },
   } = useForm<Valores>({
     resolver: zodResolver(crearEsquema(actual)),
     defaultValues: {
@@ -197,14 +198,19 @@ export function ExtenderConservacionDialog({
                 : 'Formato dd/mm/aaaa · se calcula con el plazo'
             }
           >
-            <Input
+            <EntradaFecha
               id="ext-hasta"
-              inputMode="numeric"
-              placeholder="dd/mm/aaaa"
-              className="tabular-nums"
               readOnly={plazo !== 'fecha'}
               invalid={!!errors.hasta}
               aria-describedby={fieldDescriptionId('ext-hasta')}
+              value={hasta}
+              minimo={sumarDias(actual, 1)}
+              onElegirFecha={(f) =>
+                setValue('hasta', formatearFechaEntrada(f), {
+                  shouldValidate: isSubmitted,
+                  shouldDirty: true,
+                })
+              }
               {...register('hasta')}
             />
           </FormField>

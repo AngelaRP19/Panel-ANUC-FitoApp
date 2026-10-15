@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Chip } from '@/components/ui/Chip'
 import { FormaCategoria } from '@/components/ui/CategoriaMarca'
+import { EntradaFecha } from '@/components/ui/EntradaFecha'
 import { controlClass } from '@/components/ui/Input'
 import { ESPECIE_LABEL } from '@/locales/es'
 import type { Categoria } from '@/types/enums'
@@ -37,17 +38,20 @@ function CampoFecha({
       <label htmlFor={id} className="etiqueta">
         {label} <span className="font-normal text-tinta-terciaria">(dd/mm/aaaa)</span>
       </label>
-      <input
+      <EntradaFecha
         id={id}
-        inputMode="numeric"
-        placeholder="dd/mm/aaaa"
         value={texto}
-        aria-invalid={error || undefined}
+        invalid={error}
         aria-describedby={error ? `${id}-e` : undefined}
         onChange={(e) => setTexto(e.target.value)}
         onBlur={aplicar}
         onKeyDown={(e) => e.key === 'Enter' && aplicar()}
-        className={cn(controlClass, 'h-10 w-33 tabular-nums')}
+        onElegirFecha={(f) => {
+          setTexto(formatearFechaEntrada(f))
+          setError(false)
+          onCambiar(f)
+        }}
+        className="w-41"
       />
       {error && (
         <span id={`${id}-e`} role="alert" className="text-nota font-medium text-peligro">

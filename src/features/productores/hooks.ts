@@ -49,6 +49,19 @@ export function useProductores(f: FiltrosProductores) {
   })
 }
 
+const TODOS: FiltrosProductores = { ...FILTROS_PRODUCTORES_VACIOS, filas: '1000' }
+
+/** Todos los productores (activos y deshabilitados) ordenados por nombre, para elegirlos. */
+export function useTodosProductores(enabled = true) {
+  return useQuery({
+    queryKey: productoresKeys.list(TODOS),
+    queryFn: () => listarProductores(TODOS),
+    select: (d) => d.items,
+    staleTime: 60_000,
+    enabled,
+  })
+}
+
 export function useResumenProductores() {
   return useQuery({ queryKey: productoresKeys.resumen(), queryFn: obtenerResumenProductores })
 }

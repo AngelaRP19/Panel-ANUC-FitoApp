@@ -11,6 +11,7 @@ import { mapaHandlers } from './mapa'
 import { navegacionHandlers } from './navegacion'
 import { notificacionesHandlers } from './notificaciones'
 import { productoresHandlers } from './productores'
+import { reportesHandlers } from './reportes'
 import { usuariosHandlers } from './usuarios'
 
 export const handlers = [
@@ -25,5 +26,6 @@ export const handlers = [
   ...notificacionesHandlers,
   ...documentosHandlers,
   ...mapaHandlers,
+  ...reportesHandlers,
   ...inicioHandlers,
 ]

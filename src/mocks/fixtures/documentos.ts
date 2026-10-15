@@ -82,13 +82,24 @@ export function reiniciarDocumentos() {
   documentos.splice(0, documentos.length, ...crear())
 }
 
-/** PDF mínimo válido (una página con el título) para abrir en desarrollo. */
-export function pdfDeEjemplo(titulo: string): Blob {
-  const texto = titulo
+/** Texto apto para un PDF básico: sin tildes, paréntesis ni caracteres fuera de ASCII. */
+const limpiar = (t: string) =>
+  t
     .replace(/[()\\]/g, '')
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')
-  const contenido = `BT /F1 18 Tf 72 720 Td (${texto}) Tj 0 -28 Td /F1 11 Tf (Documento de ejemplo del panel ANUC Zetaquira) Tj ET`
+    .replace(/[^\x20-\x7E]/g, '-')
+
+/** PDF mínimo válido (una página con el título y unas líneas) para abrir en desarrollo. */
+export function pdfDeEjemplo(
+  titulo: string,
+  lineas: string[] = ['Documento de ejemplo del panel ANUC Zetaquira'],
+): Blob {
+  const cuerpo = lineas
+    .slice(0, 42)
+    .map((l) => `0 -16 Td (${limpiar(l)}) Tj`)
+    .join(' ')
+  const contenido = `BT /F1 18 Tf 72 740 Td (${limpiar(titulo)}) Tj /F1 10 Tf 0 -10 Td ${cuerpo} ET`
   const objetos = [
     '<< /Type /Catalog /Pages 2 0 R >>',
     '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',

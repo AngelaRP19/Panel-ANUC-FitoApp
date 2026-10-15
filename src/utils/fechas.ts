@@ -126,6 +126,13 @@ export function sumarMeses(fecha: string, meses: number): string {
   return destino.toISOString().slice(0, 10)
 }
 
+/** Suma días a una fecha «aaaa-mm-dd». */
+export function sumarDias(fecha: string, dias: number): string {
+  const d = new Date(`${fecha}T00:00:00Z`)
+  d.setUTCDate(d.getUTCDate() + dias)
+  return d.toISOString().slice(0, 10)
+}
+
 /** «aaaa-mm-dd» → «22 sep 2027». */
 export function formatearDia(fecha: string | null | undefined): string {
   return fecha ? formatearFecha(`${fecha}T12:00:00-05:00`) : '—'
