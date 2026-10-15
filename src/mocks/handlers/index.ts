@@ -3,6 +3,7 @@
 import { alertasHandlers } from './alertas'
 import { authHandlers } from './auth'
 import { casosHandlers } from './casos'
+import { consultaHandlers } from './consulta'
 import { fincasHandlers } from './fincas'
 import { inicioHandlers } from './inicio'
 import { navegacionHandlers } from './navegacion'
@@ -17,5 +18,6 @@ export const handlers = [
   ...fincasHandlers,
   ...usuariosHandlers,
   ...alertasHandlers,
+  ...consultaHandlers,
   ...inicioHandlers,
 ]

@@ -29,6 +29,9 @@ export const obtenerToken: AdaptadorAuth['obtenerToken'] = async () =>
 export const solicitarCodigo: AdaptadorAuth['solicitarCodigo'] = async (correo) =>
   (await obtenerAdaptador()).solicitarCodigo(correo)
 
+export const cambiarContrasena: AdaptadorAuth['cambiarContrasena'] = async (actual, nueva) =>
+  (await obtenerAdaptador()).cambiarContrasena(actual, nueva)
+
 export const confirmarRecuperacion: AdaptadorAuth['confirmarRecuperacion'] = async (
   correo,
   codigo,

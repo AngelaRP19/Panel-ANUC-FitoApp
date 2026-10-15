@@ -12,6 +12,8 @@ export type CodigoErrorAuth =
   | 'CUENTA_INEXISTENTE'
   /** Recuperación: código incorrecto o vencido. */
   | 'CODIGO_INVALIDO'
+  /** Cambio de contraseña: la contraseña actual no es correcta. */
+  | 'CONTRASENA_ACTUAL'
   /** La nueva contraseña no cumple la política. */
   | 'CONTRASENA_INVALIDA'
   | 'RED'
@@ -41,4 +43,6 @@ export interface AdaptadorAuth {
   solicitarCodigo(correo: string): Promise<void>
   /** Recuperación, paso 2: valida el código y fija la nueva contraseña. */
   confirmarRecuperacion(correo: string, codigo: string, nueva: string): Promise<void>
+  /** Mi cuenta: cambia la contraseña de la sesión actual (exige la actual). */
+  cambiarContrasena(actual: string, nueva: string): Promise<void>
 }
