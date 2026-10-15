@@ -1,27 +1,32 @@
 import { useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router'
-import { Search, SlidersHorizontal, UserPlus, Users } from 'lucide-react'
+import { Download, Search, SlidersHorizontal, UserPlus, Users } from 'lucide-react'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { ErrorState } from '@/components/ui/ErrorState'
 import { Pagination } from '@/components/ui/Pagination'
+import { toast } from '@/components/ui/Toast'
 import {
+  AccionesMasivas,
   CLAVES_FILTRO_PRODUCTORES,
   FichaProductor,
   FiltrosActivosProductores,
   ProductoresFiltros,
   ProductoresTable,
   ProductorFormModal,
+  useExportarProductores,
   useFiltrosProductores,
   useProductor,
   useProductores,
   useResumenProductores,
   type Productor,
+  type SeleccionProductores,
 } from '@/features/productores'
 import { useDebounce } from '@/hooks/useDebounce'
 import { MENSAJES } from '@/locales/es'
+import { nombreConFecha } from '@/utils/descarga'
 
 type Formulario = { productor: Productor | null } | null
 
@@ -37,6 +42,33 @@ export default function ProductoresPage() {
   const resumen = useResumenProductores()
   const [panelAbierto, setPanelAbierto] = useState(false)
   const [formulario, setFormulario] = useState<Formulario>(null)
+  const exportar = useExportarProductores()
+
+  // Selección para las acciones masivas (pantalla 21): se conserva al cambiar de página.
+  const [seleccion, setSeleccion] = useState<Map<string, Productor>>(new Map())
+  const marcar = (lista: Productor[], marcado: boolean) =>
+    setSeleccion((prev) => {
+      const n = new Map(prev)
+      for (const p of lista) {
+        if (marcado) n.set(p.id, p)
+        else n.delete(p.id)
+      }
+      return n
+    })
+  const seleccionTabla: SeleccionProductores = {
+    ids: new Set(seleccion.keys()),
+    onCambiar: (p, marcado) => marcar([p], marcado),
+    onCambiarPagina: marcar,
+  }
+  const exportarLista = () =>
+    exportar.mutate(
+      { origen: { filtros }, archivo: nombreConFecha('productores', 'csv') },
+      {
+        onSuccess: () =>
+          toast.exito('Lista exportada', 'El archivo CSV respeta los filtros aplicados.'),
+        onError: () => toast.error('No se exportó la lista', MENSAJES.errorConexionTexto),
+      },
+    )
 
   const idFicha = params.get('productor')
   const ficha = useProductor(idFicha)
@@ -133,6 +165,16 @@ export default function ProductoresPage() {
           }}
           onLimpiar={limpiarTodo}
         />
+        <Button
+          variant="text"
+          size="sm"
+          className="ml-auto"
+          onClick={exportarLista}
+          loading={exportar.isPending}
+        >
+          <Download aria-hidden="true" />
+          Exportar lista (CSV)
+        </Button>
       </div>
 
       <Card className="overflow-hidden">
@@ -151,11 +193,18 @@ export default function ProductoresPage() {
           />
         ) : (
           <>
+            {seleccion.size > 0 && (
+              <AccionesMasivas
+                seleccionados={[...seleccion.values()]}
+                onQuitarSeleccion={() => setSeleccion(new Map())}
+              />
+            )}
             <ProductoresTable
               productores={lista.data?.items ?? []}
               cargando={lista.isPending}
               seleccionado={idFicha}
               onAbrir={(p) => abrirFicha(p.id)}
+              seleccion={seleccionTabla}
               vacio={
                 <EmptyState
                   icon={hayFiltros ? Search : Users}

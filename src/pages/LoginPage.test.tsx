@@ -51,11 +51,11 @@ async function ingresar(user: ReturnType<typeof userEvent.setup>, correo: string
 }
 
 describe('LoginPage', () => {
-  it('el técnico aterriza en sus casos', async () => {
+  it('el técnico aterriza en su inicio', async () => {
     const { router, user } = renderLogin()
     await ingresar(user, 'tecnico@anuc.test')
-    expect(await screen.findByText('Mis casos')).toBeInTheDocument()
-    expect(router.state.location.pathname).toBe('/casos')
+    expect(await screen.findByRole('heading', { name: /^Hola, / })).toBeInTheDocument()
+    expect(router.state.location.pathname).toBe('/inicio')
   })
 
   it('avisa que la sesión expiró', async () => {
@@ -82,8 +82,8 @@ describe('LoginPage', () => {
     await user.clear(screen.getByLabelText(/^Confirma la nueva/))
     await user.type(screen.getByLabelText(/^Confirma la nueva/), 'nueva1234')
     await user.click(screen.getByRole('button', { name: 'Guardar y entrar' }))
-    expect(await screen.findByText('Mis casos')).toBeInTheDocument()
-    expect(router.state.location.pathname).toBe('/casos')
+    expect(await screen.findByRole('heading', { name: /^Hola, / })).toBeInTheDocument()
+    expect(router.state.location.pathname).toBe('/inicio')
   })
 
   it('lleva a primer uso si todavía no hay líder técnico', async () => {

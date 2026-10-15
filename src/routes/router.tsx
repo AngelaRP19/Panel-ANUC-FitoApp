@@ -7,9 +7,11 @@ import AlertasPage from '@/pages/AlertasPage'
 import CasoDetallePage from '@/pages/CasoDetallePage'
 import CasosPage from '@/pages/CasosPage'
 import ConsultaPage from '@/pages/ConsultaPage'
+import DocumentacionPage from '@/pages/DocumentacionPage'
 import EnConstruccionPage from '@/pages/EnConstruccionPage'
 import FincasPage from '@/pages/FincasPage'
 import LoginPage from '@/pages/LoginPage'
+import MapaPage from '@/pages/MapaPage'
 import MiCuentaPage from '@/pages/MiCuentaPage'
 import NotFoundPage from '@/pages/NotFoundPage'
 import ParametrosPage from '@/pages/ParametrosPage'
@@ -115,7 +117,7 @@ export const rutas: RouteObject[] = [
                 element: <AlertaMensajePage />,
                 handle: titulo('Alertas'),
               },
-              pendiente(PATHS.mapa, 'Mapa de vigilancia', 19),
+              { path: PATHS.mapa, element: <MapaPage />, handle: titulo('Mapa de vigilancia') },
               pendiente(PATHS.reportes, 'Reportes', 23),
               {
                 path: PATHS.productores,
@@ -129,7 +131,11 @@ export const rutas: RouteObject[] = [
                 element: <ParametrosPage />,
                 handle: titulo('Parámetros epidemiológicos'),
               },
-              pendiente(PATHS.documentacion, 'Documentación fitosanitaria', 20),
+              {
+                path: PATHS.documentacion,
+                element: <DocumentacionPage />,
+                handle: titulo('Documentación'),
+              },
             ],
           },
         ],

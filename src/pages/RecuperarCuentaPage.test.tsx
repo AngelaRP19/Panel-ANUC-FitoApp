@@ -112,7 +112,7 @@ describe('RecuperarCuentaPage', () => {
     // Entra con la contraseña nueva
     await user.type(screen.getByLabelText(/^Contraseña/), 'Maracuya2026')
     await user.click(screen.getByRole('button', { name: 'Ingresar' }))
-    expect(await screen.findByText('Mis casos')).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: /^Hola, / })).toBeInTheDocument()
   })
 
   it('valida el formato del código y que las contraseñas coincidan', async () => {

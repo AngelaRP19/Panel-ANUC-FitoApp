@@ -1,14 +1,17 @@
+import { Link } from 'react-router'
+import { BookOpen } from 'lucide-react'
 import { PageHeader } from '@/components/layout/PageHeader'
+import { buttonClass } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { ErrorState } from '@/components/ui/ErrorState'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { CategoriaNoParticipa, ParametrosForm, useParametros } from '@/features/alertas'
+import { PATHS } from '@/routes/paths'
 
 /**
  * Parámetros epidemiológicos (diseño 07 · RQF25 · solo líder): una tarjeta editable por cada
  * categoría que participa en las alertas (hoy Trips) y la lista de las que no participan.
  * Todo sale de la API: habilitar otra categoría no requiere cambiar código.
- * «Ir a documentación» se agrega con la pantalla 20.
  */
 export default function ParametrosPage() {
   const { data, isPending, isError, refetch } = useParametros()
@@ -20,6 +23,12 @@ export default function ParametrosPage() {
       <PageHeader
         title="Parámetros epidemiológicos"
         description="Definen cuándo el sistema genera una alerta de posible concentración de casos confirmados. Solo el líder técnico puede cambiarlos."
+        actions={
+          <Link to={PATHS.documentacion} className={buttonClass('secondary')}>
+            <BookOpen aria-hidden="true" />
+            Ir a documentación
+          </Link>
+        }
       />
       {isError ? (
         <Card>

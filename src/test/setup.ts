@@ -5,7 +5,9 @@ import { reiniciarAuthSimulada } from '@/mocks/authSimulado'
 import { fijarEscenario } from '@/mocks/escenario'
 import { reiniciarAlertas } from '@/mocks/fixtures/alertas'
 import { reiniciarCasos } from '@/mocks/fixtures/casos'
+import { reiniciarDocumentos } from '@/mocks/fixtures/documentos'
 import { reiniciarFincas } from '@/mocks/fixtures/fincas'
+import { reiniciarNotificaciones } from '@/mocks/fixtures/notificaciones'
 import { reiniciarProductores } from '@/mocks/fixtures/productores'
 import { reiniciarUsuarios } from '@/mocks/fixtures/usuarios'
 import { server } from '@/mocks/server'
@@ -30,6 +32,8 @@ afterEach(() => {
   reiniciarFincas()
   reiniciarUsuarios()
   reiniciarAlertas()
+  reiniciarNotificaciones()
+  reiniciarDocumentos()
   sessionStorage.clear()
 })
 afterAll(() => server.close())

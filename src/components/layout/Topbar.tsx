@@ -1,5 +1,5 @@
-import { useState, type FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router'
+import { useState, type FormEvent, type ReactNode } from 'react'
+import { Link, useLocation, useNavigate } from 'react-router'
 import * as Popover from '@radix-ui/react-dialog'
 import { Bell, ChevronDown, Menu, Search } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
@@ -13,16 +13,33 @@ interface TopbarProps {
   onMenu: () => void
   /** Notificaciones nuevas (contador de la campana). */
   notificacionesNuevas?: number
+  /** Lista de avisos del panel de la campana (la provee el dominio). */
+  notificaciones?: ReactNode
+  /** Acción del encabezado del panel («Marcar como leídas»). */
+  notificacionesAcciones?: ReactNode
 }
 
 /**
  * Barra superior (pf-top, componente «Barra superior»): título de la sección, búsqueda según
  * el rol, campana con contador y chip de usuario que lleva a Mi cuenta.
  */
-export function Topbar({ titulo, onMenu, notificacionesNuevas = 0 }: TopbarProps) {
+export function Topbar({
+  titulo,
+  onMenu,
+  notificacionesNuevas = 0,
+  notificaciones,
+  notificacionesAcciones,
+}: TopbarProps) {
   const { usuario } = useAuth()
   const navigate = useNavigate()
+  const { pathname, search } = useLocation()
   const [busqueda, setBusqueda] = useState('')
+  // El panel queda abierto solo en la URL en que se abrió: al seguir un aviso (o cambiar de
+  // pantalla) se cierra.
+  const aqui = pathname + search
+  const [campanaEn, setCampanaEn] = useState<string | null>(null)
+  const campana = campanaEn === aqui
+  const setCampana = (abierta: boolean) => setCampanaEn(abierta ? aqui : null)
 
   if (!usuario) return null
   const esLider = usuario.rol === Rol.LIDER_TECNICO
@@ -66,8 +83,8 @@ export function Topbar({ titulo, onMenu, notificacionesNuevas = 0 }: TopbarProps
         />
       </form>
 
-      {/* TODO(pantalla 18): lista de notificaciones. Por ahora el contador y el panel vacío. */}
-      <Popover.Root modal={false}>
+      {/* Campana (pantalla 18): la lista y «Marcar como leídas» llegan del dominio. */}
+      <Popover.Root modal={false} open={campana} onOpenChange={setCampana}>
         <Popover.Trigger
           aria-label={`Notificaciones: ${notificacionesNuevas} nuevas`}
           className="relative grid size-10 cursor-pointer place-items-center rounded-md border border-borde bg-blanco text-tinta-secundaria hover:bg-verde-50"
@@ -87,14 +104,17 @@ export function Topbar({ titulo, onMenu, notificacionesNuevas = 0 }: TopbarProps
             aria-describedby={undefined}
             className="fixed top-16 right-4 z-40 w-100 max-w-[calc(100vw-32px)] rounded-lg border border-borde bg-blanco shadow-2 lg:right-8"
           >
-            <div className="border-b border-borde px-4 py-3.5">
-              <Popover.Title className="font-titulos text-base font-semibold">
+            <div className="flex items-center gap-2 border-b border-borde px-4 py-3.5">
+              <Popover.Title className="flex-1 font-titulos text-base font-semibold">
                 Notificaciones
               </Popover.Title>
+              {notificacionesAcciones}
             </div>
-            <p className="px-4 py-6 text-center text-cuerpo-sm text-tinta-terciaria">
-              Las notificaciones estarán disponibles pronto.
-            </p>
+            {notificaciones ?? (
+              <p className="px-4 py-6 text-center text-cuerpo-sm text-tinta-terciaria">
+                No hay notificaciones.
+              </p>
+            )}
             <div className="flex justify-between border-t border-borde px-4 py-2.5 text-cuerpo-sm">
               <Link to={PATHS.miCuenta} className="enlace">
                 Configurar notificaciones

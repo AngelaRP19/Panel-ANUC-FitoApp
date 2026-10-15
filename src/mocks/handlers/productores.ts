@@ -106,6 +106,65 @@ export const productoresHandlers = [
     })
   }),
 
+  // Exportar CSV (pantalla 21): la selección (`ids`) o la lista con los filtros aplicados.
+  // Va antes de /productores/:id para no confundirse con un id.
+  http.get(`${API}/productores/exportar`, ({ request }) => {
+    const r = soloLider(request)
+    if (r) return r
+    const p = new URL(request.url).searchParams
+    const ids = p.get('ids')?.split(',').filter(Boolean)
+    const lista = (
+      ids ? productores.map(aProductor).filter((x) => ids.includes(x.id)) : filtrar(p)
+    ).sort((a, b) => a.nombre.localeCompare(b.nombre))
+    const celda = (t: string) => (/[",;\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t)
+    const filas = [
+      ['Nombre', 'WhatsApp', 'Vereda', 'Fincas', 'Estado', 'Casos activos'],
+      ...lista.map((x) => [
+        x.nombre,
+        x.celular,
+        x.vereda ?? '',
+        x.fincas.map((f) => f.nombre).join(' / '),
+        x.activo ? 'Activo' : 'Deshabilitado',
+        String(x.casos_activos),
+      ]),
+    ]
+    // BOM para que Excel abra bien las tildes.
+    const csv = '﻿' + filas.map((f) => f.map(celda).join(',')).join('\r\n')
+    return new HttpResponse(csv, { headers: { 'Content-Type': 'text/csv; charset=utf-8' } })
+  }),
+
+  // Activar o desactivar varios productores (pantalla 21). Queda en el registro de actividad.
+  http.post(`${API}/productores/estado`, async ({ request }) => {
+    const r = soloLider(request)
+    if (r) return r
+    const { ids, activo } = (await request.json()) as { ids?: string[]; activo?: boolean }
+    if (!ids?.length || typeof activo !== 'boolean') {
+      return errorApi(422, 'VALIDACION', 'Elige al menos un productor.')
+    }
+    const cambiados = productores.filter((p) => ids.includes(p.id) && p.activo !== activo)
+    for (const p of cambiados) p.activo = activo
+    return HttpResponse.json({ actualizados: cambiados.length, solicitados: ids.length })
+  }),
+
+  // Mensaje por WhatsApp a varios productores (pantalla 21). Solo a los activos.
+  http.post(`${API}/productores/mensaje`, async ({ request }) => {
+    const r = soloLider(request)
+    if (r) return r
+    const { ids, mensaje } = (await request.json()) as { ids?: string[]; mensaje?: string }
+    const texto = mensaje?.trim() ?? ''
+    if (!texto) {
+      return errorApi(422, 'VALIDACION', 'Revisa los campos marcados.', {
+        mensaje: 'Escribe el mensaje para los productores.',
+      })
+    }
+    const elegidos = productores.filter((p) => ids?.includes(p.id))
+    const activos = elegidos.filter((p) => p.activo)
+    return HttpResponse.json({
+      enviados: activos.length,
+      omitidos: elegidos.length - activos.length,
+    })
+  }),
+
   http.get(`${API}/productores/:id`, ({ request, params }) => {
     const r = soloLider(request)
     if (r) return r

@@ -15,7 +15,7 @@ export function CargaTecnicos({ carga, sinTecnico }: CargaTecnicosProps) {
       <CardHeader
         id="t-carga"
         title="Carga por técnico"
-        subtitle="Casos activos: pendientes y en análisis técnico"
+        subtitle="Casos activos: en revisión y registrados sin cerrar"
       />
       <div className="flex flex-col gap-4.5 px-6 py-5">
         {carga.length === 0 ? (
@@ -32,7 +32,7 @@ export function CargaTecnicos({ carga, sinTecnico }: CargaTecnicosProps) {
                 <span className="truncate font-semibold">{t.nombre}</span>
                 <span className="flex-none tabular-nums">
                   {t.activos} {t.activos === 1 ? 'activo' : 'activos'}
-                  {t.pendientes > 0 && ` · ${t.pendientes} pendientes`}
+                  {t.en_revision > 0 && ` · ${t.en_revision} en revisión`}
                 </span>
               </div>
               <div

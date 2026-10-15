@@ -1,11 +1,12 @@
 // Hooks de TanStack Query del feature "inicio". Las páginas solo usan estos hooks.
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import { obtenerCasosPorCategoria, obtenerResumen } from './api'
+import { obtenerCasosPorCategoria, obtenerResumen, obtenerResumenTecnico } from './api'
 import type { PeriodoCategorias } from './types'
 
 export const inicioKeys = {
   all: ['inicio'] as const,
   resumen: () => [...inicioKeys.all, 'resumen'] as const,
+  resumenTecnico: () => [...inicioKeys.all, 'resumen-tecnico'] as const,
   categorias: (periodo: PeriodoCategorias) => [...inicioKeys.all, 'categorias', periodo] as const,
 }
 
@@ -17,6 +18,15 @@ export function useResumenPanel({ enabled = true }: { enabled?: boolean } = {}) 
     queryFn: obtenerResumen,
     refetchInterval: 5 * UN_MINUTO,
     enabled,
+  })
+}
+
+/** Inicio del técnico (pantalla 17). */
+export function useResumenTecnico() {
+  return useQuery({
+    queryKey: inicioKeys.resumenTecnico(),
+    queryFn: obtenerResumenTecnico,
+    refetchInterval: 5 * UN_MINUTO,
   })
 }
 
