@@ -37,6 +37,8 @@ interface CasoEncabezadoProps {
   usuarioId: string
   onProductorFinca: () => void
   onReasignar: () => void
+  /** Extender la conservación (caso cerrado; líder o técnico en su caso). */
+  onExtender: () => void
 }
 
 /**
@@ -50,6 +52,7 @@ export function CasoEncabezado({
   usuarioId,
   onProductorFinca,
   onReasignar,
+  onExtender,
 }: CasoEncabezadoProps) {
   const activo = ESTADOS_ACTIVOS.includes(caso.estado)
   const cerrado = caso.estado === 'CERRADO'
@@ -115,6 +118,17 @@ export function CasoEncabezado({
                   · {textoFaltan(caso.vence_en)}
                   {caso.conservacion_extendida && ' · extendida'}
                 </span>
+              )}
+              {caso.vence_en && (esLider || esMio) && (
+                <Button
+                  variant="text"
+                  size="sm"
+                  onClick={onExtender}
+                  className="ml-1 h-6 px-1.5 align-baseline"
+                  aria-label="Extender conservación"
+                >
+                  Extender
+                </Button>
               )}
             </Celda>
           </>

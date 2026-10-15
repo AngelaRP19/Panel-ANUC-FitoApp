@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { useSearchParams } from 'react-router'
 
 /**
@@ -13,6 +13,26 @@ export function useUrlFilters<T extends Record<string, string>>(defaultsProp: T)
   const claveDefaults = JSON.stringify(defaultsProp)
   const defaults = useMemo(() => JSON.parse(claveDefaults) as T, [claveDefaults])
 
+  // `setSearchParams(prev => …)` recibe los parámetros del último render: si llegan dos cambios
+  // seguidos (p. ej. el debounce de la búsqueda y un filtro), el segundo pisaría al primero.
+  // Por eso cada cambio parte del último pedido aún no reflejado en la URL.
+  const actuales = useRef(params)
+  const pendiente = useRef<URLSearchParams | null>(null)
+  useEffect(() => {
+    actuales.current = params
+    pendiente.current = null
+  }, [params])
+
+  const aplicar = useCallback(
+    (cambiar: (siguiente: URLSearchParams) => void) => {
+      const siguiente = new URLSearchParams(pendiente.current ?? actuales.current)
+      cambiar(siguiente)
+      pendiente.current = siguiente
+      setParams(siguiente, { replace: true })
+    },
+    [setParams],
+  )
+
   const filtros = useMemo(() => {
     const actual = { ...defaults }
     for (const clave of Object.keys(defaults) as (keyof T)[]) {
@@ -25,36 +45,24 @@ export function useUrlFilters<T extends Record<string, string>>(defaultsProp: T)
   /** Cambia uno o varios filtros. Cualquier cambio que no sea de página vuelve a la página 1. */
   const setFiltros = useCallback(
     (cambios: Partial<T>) => {
-      setParams(
-        (prev) => {
-          const siguiente = new URLSearchParams(prev)
-          for (const [clave, valor] of Object.entries(cambios)) {
-            if (valor === undefined || valor === '' || valor === defaults[clave]) {
-              siguiente.delete(clave)
-            } else {
-              siguiente.set(clave, valor)
-            }
+      aplicar((siguiente) => {
+        for (const [clave, valor] of Object.entries(cambios)) {
+          if (valor === undefined || valor === '' || valor === defaults[clave]) {
+            siguiente.delete(clave)
+          } else {
+            siguiente.set(clave, valor)
           }
-          if (!('page' in cambios) && 'page' in defaults) siguiente.delete('page')
-          return siguiente
-        },
-        { replace: true },
-      )
+        }
+        if (!('page' in cambios) && 'page' in defaults) siguiente.delete('page')
+      })
     },
-    [setParams, defaults],
+    [aplicar, defaults],
   )
 
   /** Quita todos los filtros conocidos (botón «Limpiar filtros»). */
   const limpiar = useCallback(() => {
-    setParams(
-      (prev) => {
-        const siguiente = new URLSearchParams(prev)
-        Object.keys(defaults).forEach((clave) => siguiente.delete(clave))
-        return siguiente
-      },
-      { replace: true },
-    )
-  }, [setParams, defaults])
+    aplicar((siguiente) => Object.keys(defaults).forEach((clave) => siguiente.delete(clave)))
+  }, [aplicar, defaults])
 
   /** Número de filtros con un valor distinto del predeterminado (sin contar la página). */
   const activos = (Object.keys(defaults) as (keyof T)[]).filter(

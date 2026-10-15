@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { useAuth } from '@/context/AuthContext'
 import { useResumenNavegacion } from '@/features/navegacion'
+import { ListaNotificaciones, MarcarLeidas } from '@/features/notificaciones'
 import { registrarCasoInaccesible } from '@/services/apiClient'
 import { Rol } from '@/types/enums'
 import { PATHS } from './paths'
@@ -35,6 +36,8 @@ export function PanelLayout() {
     <AppLayout
       onReintentar={reintentar}
       notificacionesNuevas={data?.notificaciones_nuevas}
+      notificaciones={<ListaNotificaciones />}
+      notificacionesAcciones={<MarcarLeidas />}
       badges={{
         casos: data?.casos_pendientes,
         alertas: esLider ? data?.alertas_generadas : undefined,

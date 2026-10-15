@@ -2,12 +2,14 @@ import { Link } from 'react-router'
 import { Badge } from '@/components/ui/Badge'
 import { Card, CardHeader } from '@/components/ui/Card'
 import { ESTADO_ALERTA_TONO } from '@/features/alertas'
-import { CATEGORIA_LABEL, ESTADO_ALERTA_LABEL } from '@/locales/es'
+import { CATEGORIA_LABEL, ESTADO_ALERTA_LABEL, VEREDA_LABEL, etiqueta } from '@/locales/es'
 import { formatearFechaCorta } from '@/utils/fechas'
 import type { AlertaReciente, ResumenPanel } from '../types'
 
+const vereda = (v: string) => etiqueta(VEREDA_LABEL, v, v)
+
 function detalle(a: AlertaReciente) {
-  const base = `${CATEGORIA_LABEL[a.categoria]} · ${a.vereda}`
+  const base = `${CATEGORIA_LABEL[a.categoria]} · ${vereda(a.vereda)}`
   if (a.estado === 'CONFIRMADA') return `${base} · falta comunicar`
   if (a.estado === 'COMUNICADA' && a.productores_notificados !== null)
     return `${base} · ${a.productores_notificados} productores`
@@ -34,7 +36,7 @@ export function ResumenAlertas({ alertas }: { alertas: ResumenPanel['alertas'] }
         </div>
         <p className="border-l border-borde pl-4 text-cuerpo-sm text-tinta-secundaria">
           {n > 0 && destacada
-            ? `Sin revisar · posible concentración de ${CATEGORIA_LABEL[destacada.categoria]} en ${destacada.vereda}. `
+            ? `Sin revisar · posible concentración de ${CATEGORIA_LABEL[destacada.categoria]} en ${vereda(destacada.vereda)}. `
             : 'No hay alertas pendientes de revisión. '}
           Una alerta generada es una posibilidad, no un hecho.
         </p>

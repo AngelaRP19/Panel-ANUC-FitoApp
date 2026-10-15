@@ -39,9 +39,12 @@ describe('Productores', () => {
 
     await user.clear(buscar)
     await user.type(buscar, '322 518')
-    // La fila anterior (búsqueda «Rojas») sigue visible mientras corre el debounce.
-    await waitFor(() => expect(filas()[0]).toHaveTextContent('Ernesto Gómez Ruiz'))
-    expect(filas()).toHaveLength(1)
+    // Mientras corre el debounce puede verse la búsqueda anterior o una parcial («322»):
+    // se espera el resultado final completo.
+    await waitFor(() => {
+      expect(filas()).toHaveLength(1)
+      expect(filas()[0]).toHaveTextContent('Ernesto Gómez Ruiz')
+    })
     await user.clear(buscar)
 
     await user.click(screen.getByRole('button', { name: 'Filtros' }))

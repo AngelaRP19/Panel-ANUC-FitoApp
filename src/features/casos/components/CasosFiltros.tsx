@@ -3,6 +3,7 @@ import * as Popover from '@radix-ui/react-popover'
 import { AlertCircle, SlidersHorizontal } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { FilterChip } from '@/components/ui/Chip'
+import { EntradaFecha } from '@/components/ui/EntradaFecha'
 import { controlClass } from '@/components/ui/Input'
 import { CATEGORIA_LABEL, ESPECIE_LABEL, MENSAJES } from '@/locales/es'
 import { cn } from '@/utils/cn'
@@ -283,15 +284,17 @@ export function CasosFiltros({ filtros, onAplicar, esLider }: CasosFiltrosProps)
                 </>
               }
             >
-              <input
+              <EntradaFecha
                 id={`f-${k}`}
-                inputMode="numeric"
-                placeholder="dd/mm/aaaa"
                 value={fechas[k]}
                 onChange={(e) => setFechas((f) => ({ ...f, [k]: e.target.value }))}
-                aria-invalid={!!errores[k] || undefined}
+                onElegirFecha={(fecha) => {
+                  setFechas((f) => ({ ...f, [k]: formatearFechaEntrada(fecha) }))
+                  setErrores((e) => ({ ...e, [k]: undefined }))
+                }}
+                invalid={!!errores[k]}
                 aria-describedby={errores[k] ? `f-${k}-error` : undefined}
-                className={cn(controlClass, 'h-9 text-cuerpo-sm tabular-nums')}
+                className="h-9 text-cuerpo-sm"
               />
             </CampoFiltro>
           ))}

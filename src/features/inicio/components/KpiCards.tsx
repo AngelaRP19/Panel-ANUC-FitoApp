@@ -16,7 +16,17 @@ interface KpiProps {
   ariaLabel: string
 }
 
-function Kpi({ to, rotulo, valor, pie, pieDestacado, icon: Icon, iconClass, ariaLabel }: KpiProps) {
+/** Tarjeta KPI enlazada (pf-kpi): rótulo, valor, pie e icono. La usan ambos inicios. */
+export function Kpi({
+  to,
+  rotulo,
+  valor,
+  pie,
+  pieDestacado,
+  icon: Icon,
+  iconClass,
+  ariaLabel,
+}: KpiProps) {
   return (
     <Link
       to={to}
@@ -68,22 +78,22 @@ export function KpiCards({ resumen }: { resumen: ResumenPanel }) {
         valor={kpis.pendientes_revision}
         pie={
           kpis.pendientes_mas_48h > 0
-            ? `${kpis.pendientes_mas_48h} con más de 48 h en espera`
-            : 'Ninguno con más de 48 h en espera'
+            ? `Sin técnico asignado · ${kpis.pendientes_mas_48h} con más de 48 h`
+            : 'Sin técnico asignado'
         }
         pieDestacado={kpis.pendientes_mas_48h > 0}
         icon={ClipboardList}
         iconClass="bg-advertencia-suave text-advertencia"
-        ariaLabel={`${plural(kpis.pendientes_revision, 'caso pendiente', 'casos pendientes')} de revisión, ${kpis.pendientes_mas_48h} con más de 48 horas en espera. Ver en casos`}
+        ariaLabel={`${plural(kpis.pendientes_revision, 'caso pendiente', 'casos pendientes')} de revisión sin técnico asignado, ${kpis.pendientes_mas_48h} con más de 48 horas en espera. Ver en casos`}
       />
       <Kpi
         to="/casos?estado=EN_REVISION"
-        rotulo="En análisis técnico"
-        valor={kpis.en_analisis_tecnico}
-        pie="Casos que un técnico está revisando"
+        rotulo="En revisión"
+        valor={kpis.en_revision}
+        pie="Con técnico asignado y sin diagnóstico"
         icon={Search}
         iconClass="bg-revision-suave text-revision"
-        ariaLabel={`${plural(kpis.en_analisis_tecnico, 'caso', 'casos')} en análisis técnico. Ver en casos`}
+        ariaLabel={`${plural(kpis.en_revision, 'caso', 'casos')} en revisión, con técnico asignado y sin diagnóstico. Ver en casos`}
       />
       <Kpi
         to="/casos?estado=CERRADO"

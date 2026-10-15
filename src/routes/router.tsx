@@ -2,16 +2,25 @@ import { lazy, Suspense, type ReactNode } from 'react'
 import { createBrowserRouter, type RouteObject } from 'react-router'
 import type { RouteHandle } from '@/components/layout/AppLayout'
 import { Spinner } from '@/components/ui/Spinner'
+import AlertaMensajePage from '@/pages/AlertaMensajePage'
+import AlertasPage from '@/pages/AlertasPage'
 import CasoDetallePage from '@/pages/CasoDetallePage'
 import CasosPage from '@/pages/CasosPage'
-import EnConstruccionPage from '@/pages/EnConstruccionPage'
+import ConsultaPage from '@/pages/ConsultaPage'
+import DocumentacionPage from '@/pages/DocumentacionPage'
+import FincasPage from '@/pages/FincasPage'
 import LoginPage from '@/pages/LoginPage'
+import MapaPage from '@/pages/MapaPage'
 import MiCuentaPage from '@/pages/MiCuentaPage'
 import NotFoundPage from '@/pages/NotFoundPage'
+import ParametrosPage from '@/pages/ParametrosPage'
 import PrimerUsoPage from '@/pages/PrimerUsoPage'
 import ProductoresPage from '@/pages/ProductoresPage'
 import RecuperarCuentaPage from '@/pages/RecuperarCuentaPage'
+import ReporteDetallePage from '@/pages/ReporteDetallePage'
+import ReportesPage from '@/pages/ReportesPage'
 import SinAccesoPage from '@/pages/SinAccesoPage'
+import TecnicosPage from '@/pages/TecnicosPage'
 import { Rol } from '@/types/enums'
 import { IndexRedirect } from './IndexRedirect'
 import { InicioPorRol } from './InicioPorRol'
@@ -25,15 +34,6 @@ import { RoleRoute } from './RoleRoute'
 const DevUiPage = import.meta.env.DEV ? lazy(() => import('@/pages/DevUiPage')) : null
 
 const titulo = (t: string): RouteHandle => ({ titulo: t })
-
-/** Ruta aún sin desarrollar: muestra «Pantalla en construcción». */
-function pendiente(path: string, nombre: string, pantalla: number): RouteObject {
-  return {
-    path,
-    element: <EnConstruccionPage titulo={nombre} pantalla={pantalla} />,
-    handle: titulo(nombre),
-  }
-}
 
 function conSuspense(elemento: ReactNode) {
   return (
@@ -82,7 +82,8 @@ export const rutas: RouteObject[] = [
             element: <CasoDetallePage />,
             handle: { titulo: 'Casos', tituloTecnico: 'Mis casos' } satisfies RouteHandle,
           },
-          pendiente(PATHS.alertas, 'Alertas epidemiológicas', 11),
+          { path: PATHS.alertas, element: <AlertasPage />, handle: titulo('Alertas') },
+          { path: '/alertas/:id', element: <AlertasPage />, handle: titulo('Alertas') },
           { path: PATHS.miCuenta, element: <MiCuentaPage />, handle: titulo('Mi cuenta') },
           { path: PATHS.sinAcceso, element: <SinAccesoPage />, handle: titulo('Mis casos') },
 
@@ -90,25 +91,48 @@ export const rutas: RouteObject[] = [
           {
             // El líder consulta y edita productores y fincas en su propia sección.
             element: <RoleRoute roles={[Rol.TECNICO]} redirigirA={PATHS.productores} />,
-            children: [pendiente(PATHS.consulta, 'Productores y fincas', 14)],
+            children: [
+              {
+                path: PATHS.consulta,
+                element: <ConsultaPage />,
+                handle: titulo('Productores y fincas'),
+              },
+            ],
           },
 
           // Solo líder técnico
           {
             element: <RoleRoute roles={LIDER} />,
             children: [
-              pendiente('/alertas/:id/mensaje', 'Mensaje a productores', 12),
-              pendiente(PATHS.mapa, 'Mapa de vigilancia', 19),
-              pendiente(PATHS.reportes, 'Reportes', 23),
+              {
+                path: '/alertas/:id/mensaje',
+                element: <AlertaMensajePage />,
+                handle: titulo('Alertas'),
+              },
+              { path: PATHS.mapa, element: <MapaPage />, handle: titulo('Mapa de vigilancia') },
+              { path: PATHS.reportes, element: <ReportesPage />, handle: titulo('Reportes') },
+              {
+                path: `${PATHS.reportes}/:tipo`,
+                element: <ReporteDetallePage />,
+                handle: titulo('Reportes'),
+              },
               {
                 path: PATHS.productores,
                 element: <ProductoresPage />,
                 handle: titulo('Productores'),
               },
-              pendiente(PATHS.fincas, 'Fincas y cultivos', 9),
-              pendiente(PATHS.tecnicos, 'Técnicos', 10),
-              pendiente(PATHS.parametros, 'Parámetros epidemiológicos', 13),
-              pendiente(PATHS.documentacion, 'Documentación fitosanitaria', 20),
+              { path: PATHS.fincas, element: <FincasPage />, handle: titulo('Fincas y cultivos') },
+              { path: PATHS.tecnicos, element: <TecnicosPage />, handle: titulo('Técnicos') },
+              {
+                path: PATHS.parametros,
+                element: <ParametrosPage />,
+                handle: titulo('Parámetros epidemiológicos'),
+              },
+              {
+                path: PATHS.documentacion,
+                element: <DocumentacionPage />,
+                handle: titulo('Documentación'),
+              },
             ],
           },
         ],

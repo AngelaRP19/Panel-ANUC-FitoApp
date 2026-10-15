@@ -8,6 +8,7 @@ import {
   resetPassword,
   signIn,
   signOut,
+  updatePassword,
 } from 'aws-amplify/auth'
 import { env } from '@/config/env'
 import { ErrorAuth, type AdaptadorAuth, type CodigoErrorAuth } from './tipos'
@@ -98,6 +99,19 @@ export const adaptadorCognito: AdaptadorAuth = {
       } catch (error) {
         if (error instanceof Error && error.name === 'UserNotFoundException') {
           throw new ErrorAuth('CUENTA_INEXISTENTE')
+        }
+        throw error
+      }
+    }),
+
+  // Con sesión iniciada, NotAuthorizedException significa que la contraseña actual no es correcta.
+  cambiarContrasena: (actual, nueva) =>
+    conErrores(async () => {
+      try {
+        await updatePassword({ oldPassword: actual, newPassword: nueva })
+      } catch (error) {
+        if (error instanceof Error && error.name === 'NotAuthorizedException') {
+          throw new ErrorAuth('CONTRASENA_ACTUAL')
         }
         throw error
       }

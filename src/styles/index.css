@@ -196,3 +196,25 @@
 @utility esqueleto {
   @apply block rounded-sm bg-verde-100;
 }
+
+/*
+ * Reporte para imprimir o guardar como PDF (features/reportes/components/DocumentoImpresion).
+ * Solo existe mientras se imprime: en pantalla no se ve y al imprimir se oculta el panel.
+ */
+@media screen {
+  .impresion-reporte {
+    display: none;
+  }
+}
+@media print {
+  body:has(> .impresion-reporte) {
+    background: var(--color-blanco);
+  }
+  body:has(> .impresion-reporte) > :not(.impresion-reporte) {
+    display: none !important;
+  }
+  .impresion-reporte {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}

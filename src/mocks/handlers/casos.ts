@@ -252,6 +252,51 @@ export const casosHandlers = [
     return HttpResponse.json(detalleDe(caso))
   }),
 
+  // Extender la conservación de un caso cerrado (pantalla 22): líder o técnico en sus casos.
+  // Queda en el historial con el nombre, la fecha y la justificación.
+  http.post(`${API}/casos/:id/conservacion`, async ({ request, params }) => {
+    const u = usuarioActual(request)
+    if (!u) return noAutenticado()
+    const caso = visibles(u).find((c) => c.id === params.id)
+    if (!caso) return errorApi(404, 'CASO_NO_ENCONTRADO', 'El caso no existe.')
+    if (caso.estado !== 'CERRADO' || !caso.vence_en) {
+      return errorApi(
+        409,
+        'ESTADO_INVALIDO',
+        'Solo se extiende la conservación de un caso cerrado.',
+      )
+    }
+    const b = (await request.json()) as { vence_en?: string; justificacion?: string }
+    const campos: Record<string, string> = {}
+    const justificacion = b.justificacion?.trim() ?? ''
+    if (justificacion.length < 20) {
+      campos.justificacion = 'Escribe la justificación para extender la conservación.'
+    }
+    const nueva = /^\d{4}-\d{2}-\d{2}$/.test(b.vence_en ?? '')
+      ? new Date(`${b.vence_en}T23:59:00-05:00`)
+      : null
+    if (!nueva || Number.isNaN(nueva.getTime())) {
+      campos.vence_en = 'Escribe una fecha válida con el formato dd/mm/aaaa.'
+    } else if (nueva.getTime() <= new Date(caso.vence_en).getTime()) {
+      campos.vence_en = 'La nueva fecha debe ser posterior al vencimiento actual.'
+    }
+    if (Object.keys(campos).length) {
+      return errorApi(422, 'VALIDACION', 'Revisa los campos marcados.', campos)
+    }
+    caso.vence_en = nueva!.toISOString()
+    caso.conservacion_extendida = true
+    caso.extensiones = [
+      ...(caso.extensiones ?? []),
+      {
+        por: u.nombre,
+        en: new Date().toISOString(),
+        justificacion,
+        vence_en: caso.vence_en,
+      },
+    ]
+    return HttpResponse.json(detalleDe(caso))
+  }),
+
   // Asignar o reasignar el técnico (solo líder). Pendiente de revisión → En revisión.
   http.patch(`${API}/casos/:id/asignacion`, async ({ request, params }) => {
     const u = usuarioActual(request)
@@ -274,28 +319,5 @@ export const casosHandlers = [
     caso.tecnico = { id: tecnico.id, nombre: tecnico.nombre }
     if (caso.estado === 'PENDIENTE_REVISION') caso.estado = 'EN_REVISION'
     return HttpResponse.json(caso)
-  }),
-
-  // Técnicos activos con su carga (para asignar). El líder también puede atender casos.
-  http.get(`${API}/tecnicos`, ({ request }) => {
-    const u = usuarioActual(request)
-    if (!u) return noAutenticado()
-    const lista = usuarios
-      .filter((x) => x.activo)
-      .sort((a, b) =>
-        a.rol === b.rol ? a.nombre.localeCompare(b.nombre) : a.rol === 'TECNICO' ? -1 : 1,
-      )
-      .map((x) => {
-        const suyos = casos.filter((c) => c.tecnico?.id === x.id)
-        return {
-          id: x.id,
-          nombre: x.nombre,
-          rol: x.rol,
-          activos: suyos.filter((c) => c.estado === 'EN_REVISION' || c.estado === 'REGISTRADO')
-            .length,
-          en_revision: suyos.filter((c) => c.estado === 'EN_REVISION').length,
-        }
-      })
-    return HttpResponse.json(lista)
   }),
 ]

@@ -31,6 +31,8 @@ interface AuthContextValue {
   iniciarSesion: (correo: string, contrasena: string) => Promise<ResultadoInicioSesion>
   confirmarNuevaContrasena: (nueva: string) => Promise<void>
   cerrarSesion: () => Promise<void>
+  /** Reemplaza los datos del usuario de la sesión (Mi cuenta, tras PATCH /me). */
+  actualizarUsuario: (u: UsuarioSesion) => void
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -108,6 +110,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       iniciarSesion,
       confirmarNuevaContrasena,
       cerrarSesion,
+      actualizarUsuario: setUsuario,
     }),
     [usuario, cargando, sesionExpirada, iniciarSesion, confirmarNuevaContrasena, cerrarSesion],
   )
