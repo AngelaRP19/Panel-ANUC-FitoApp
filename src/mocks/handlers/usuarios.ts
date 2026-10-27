@@ -67,17 +67,16 @@ export function validar(b: CuerpoCuenta, excluirId?: string) {
 
 export const usuariosHandlers = [
   // Cuentas del panel. Con `con_carga` devuelve la lista para asignar casos (pantalla 5): solo
-  // cuentas activas con su carga. Sin él, la lista paginada de la pantalla Técnicos.
+  // cuentas de rol TECNICO activas con su carga (D-02: la cuenta de técnico del líder es una
+  // más; el rol líder nunca recibe casos). Sin él, la lista paginada de la pantalla Técnicos.
   http.get(`${API}/tecnicos`, ({ request }) => {
     const u = usuarioActual(request)
     if (!u) return noAutenticado()
     const p = new URL(request.url).searchParams
     if (p.get('con_carga')) {
       const lista = usuarios
-        .filter((x) => x.activo)
-        .sort((a, b) =>
-          a.rol === b.rol ? a.nombre.localeCompare(b.nombre) : a.rol === 'TECNICO' ? -1 : 1,
-        )
+        .filter((x) => x.activo && x.rol === 'TECNICO')
+        .sort((a, b) => a.nombre.localeCompare(b.nombre))
         .map((x) => ({
           id: x.id,
           nombre: x.nombre,

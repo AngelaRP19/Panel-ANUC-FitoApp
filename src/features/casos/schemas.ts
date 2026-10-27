@@ -9,10 +9,6 @@ export const diagnosticoSchema = z
     motivo: z.string(),
     descripcion: z.string(),
     observaciones: z.string(),
-    /** Solo el líder: '' cuando el caso no tiene técnico y aún no se elige. */
-    responsable: z.string(),
-    /** true si el usuario debe elegir el responsable (líder). */
-    eligeResponsable: z.boolean(),
   })
   .superRefine((v, ctx) => {
     if (!v.resultado) {
@@ -31,13 +27,6 @@ export const diagnosticoSchema = z
     }
     if (v.resultado === 'REQUIERE_VISITA' && !v.motivo.trim()) {
       ctx.addIssue({ code: 'custom', path: ['motivo'], message: 'Escribe el motivo de la visita.' })
-    }
-    if (v.eligeResponsable && !v.responsable) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['responsable'],
-        message: 'Selecciona el técnico responsable.',
-      })
     }
   })
 

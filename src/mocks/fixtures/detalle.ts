@@ -226,7 +226,9 @@ export function cerradoEn(c: CasoFixture) {
 export function diagnosticoDe(c: CasoFixture): DiagnosticoFixture | null {
   if (c.diagnostico !== undefined) return c.diagnostico
   if (c.estado !== 'REGISTRADO' && c.estado !== 'CERRADO') return null
-  const responsable = c.tecnico ?? { id: 'u-wilmar', nombre: 'Wilmar Torres' }
+  // Un caso registrado o cerrado siempre tiene técnico; el respaldo es la cuenta de técnico
+  // del líder (el rol líder no diagnostica, D-02).
+  const responsable = c.tecnico ?? { id: 'u-wilmar-tec', nombre: 'Wilmar Torres' }
   const cierre = cerradoEn(c)
   const registrado = cierre ? mas(cierre, -7 * MIN) : mas(c.enviado_a_panel_en!, 2 * DIA)
   if (c.id === '0226') {

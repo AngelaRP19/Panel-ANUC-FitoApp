@@ -98,10 +98,13 @@ describe('Bandeja de casos · líder técnico', () => {
     expect(within(dialogo).getByText('320 451 7732')).toBeInTheDocument()
     await user.click(within(dialogo).getByRole('button', { name: 'Asignar técnico' }))
 
-    // Solo técnicos activos: Diana Rincón está deshabilitada.
+    // Solo cuentas de rol técnico activas: Diana Rincón está deshabilitada y el rol líder no
+    // aparece. La cuenta de técnico del líder (D-02) es un técnico más.
     const opciones = await within(dialogo).findAllByRole('radio')
     expect(opciones).toHaveLength(3)
     expect(within(dialogo).queryByText(/Diana/)).not.toBeInTheDocument()
+    expect(within(dialogo).queryByText(/líder técnico/i)).not.toBeInTheDocument()
+    expect(within(dialogo).getByRole('radio', { name: /Wilmar Torres/ })).toBeInTheDocument()
     expect(
       within(dialogo).getByText('Técnico · 5 casos activos, 5 en revisión'),
     ).toBeInTheDocument()

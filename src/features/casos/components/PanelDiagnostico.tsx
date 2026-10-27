@@ -1,5 +1,11 @@
-import { Ban, MessageCircle } from 'lucide-react'
+import { Ban, Lock, MessageCircle, UserRound } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
+import { Aviso } from '@/components/ui/Aviso'
+import { Button } from '@/components/ui/Button'
+import { toast } from '@/components/ui/Toast'
+import { esErrorApi } from '@/services/apiClient'
+import { formatearFecha } from '@/utils/fechas'
+import { useCerrarCaso } from '../hooks'
 import type { CasoDetalle } from '../types'
 import { FormDiagnostico } from './FormDiagnostico'
 import { ResumenDiagnostico } from './ResumenDiagnostico'
@@ -34,24 +40,58 @@ function SinDiagnostico({
   )
 }
 
+/** «Cerrar caso» para quien puede cerrar sin poder diagnosticar (el líder, con el caso Registrado). */
+function CerrarCasoLectura({ caso }: { caso: CasoDetalle }) {
+  const cerrar = useCerrarCaso(caso.id)
+  return (
+    <div className="flex flex-col gap-2 border-t border-borde px-6 pt-4 pb-6">
+      {cerrar.isError && (
+        <Aviso tono="peligro" titulo="No se cerró el caso.">
+          {esErrorApi(cerrar.error) && cerrar.error.codigo === 'RED'
+            ? 'Se perdió la conexión. Intenta de nuevo.'
+            : esErrorApi(cerrar.error)
+              ? cerrar.error.message
+              : null}
+        </Aviso>
+      )}
+      <Button
+        variant="secondary"
+        loading={cerrar.isPending}
+        aria-describedby="ayuda-cerrar"
+        onClick={() =>
+          cerrar.mutate(undefined, {
+            onSuccess: (nuevo) =>
+              toast.exito(
+                'Caso cerrado',
+                `Caso #${caso.id} · las evidencias se conservan hasta el ${formatearFecha(nuevo.vence_en)}.`,
+              ),
+          })
+        }
+      >
+        <Lock aria-hidden="true" />
+        Cerrar caso
+      </Button>
+      <p id="ayuda-cerrar" className="text-nota text-tinta-terciaria">
+        Al cerrar, se fija la fecha de vencimiento de conservación en 6 meses.
+      </p>
+    </div>
+  )
+}
+
 interface PanelDiagnosticoProps {
   caso: CasoDetalle
-  esLider: boolean
-  usuarioId: string
   usuarioNombre: string
 }
 
 /**
- * Columna «Resultado técnico · decisión humana» del detalle. El formulario está activo mientras
- * el caso no esté cerrado: En revisión o Registrado (técnico asignado o líder) y, para el líder,
- * también Pendiente de revisión (eligiendo el técnico responsable). Cerrado: solo lectura.
+ * Columna «Resultado técnico · decisión humana» del detalle. Se guía por los permisos que
+ * calcula el servidor (`puede_diagnosticar`, `puede_cerrar`), no por el rol:
+ * - Quien puede diagnosticar (el técnico asignado, En revisión o Registrado) ve el formulario.
+ * - El resto (siempre el líder, D-02) ve el diagnóstico en solo lectura si existe, con
+ *   «Cerrar caso» si le corresponde; si no existe, un aviso.
+ * Cerrado: solo lectura.
  */
-export function PanelDiagnostico({
-  caso,
-  esLider,
-  usuarioId,
-  usuarioNombre,
-}: PanelDiagnosticoProps) {
+export function PanelDiagnostico({ caso, usuarioNombre }: PanelDiagnosticoProps) {
   if (caso.estado === 'CERRADO') return <ResumenDiagnostico caso={caso} />
 
   if (caso.estado === 'DESCARTADO') {
@@ -73,25 +113,30 @@ export function PanelDiagnostico({
     )
   }
 
-  const responsable = caso.tecnico?.id === usuarioId
-  if (!esLider && !responsable) {
+  if (caso.puede_diagnosticar) {
     return (
-      <SinDiagnostico
-        icono={Ban}
-        titulo="No eres el técnico responsable"
-        texto="Solo el técnico asignado o el líder técnico pueden registrar el diagnóstico de este caso."
+      <FormDiagnostico
+        // Al cambiar de estado (guardar o cerrar) el formulario se reinicia con lo registrado.
+        key={`${caso.id}-${caso.estado}`}
+        caso={caso}
+        usuarioNombre={usuarioNombre}
       />
     )
   }
 
+  if (caso.diagnostico) {
+    return (
+      <ResumenDiagnostico caso={caso}>
+        {caso.puede_cerrar && <CerrarCasoLectura caso={caso} />}
+      </ResumenDiagnostico>
+    )
+  }
+
   return (
-    <FormDiagnostico
-      // Al cambiar de estado (guardar o cerrar) el formulario se reinicia con lo registrado.
-      key={`${caso.id}-${caso.estado}`}
-      caso={caso}
-      esLider={esLider}
-      usuarioId={usuarioId}
-      usuarioNombre={usuarioNombre}
+    <SinDiagnostico
+      icono={UserRound}
+      titulo="Sin diagnóstico técnico"
+      texto="Solo el técnico asignado registra el diagnóstico."
     />
   )
 }

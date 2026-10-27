@@ -1,13 +1,21 @@
+import type { ReactNode } from 'react'
 import { ResultadoTecnicoBadge } from '@/components/ui/ResultadoTecnicoBadge'
 import { CATEGORIA_LABEL, etiqueta } from '@/locales/es'
 import { formatearFechaHora } from '@/utils/fechas'
 import type { CasoDetalle } from '../types'
 
 /**
- * «Diagnóstico técnico registrado» de un caso cerrado (artboard 04c): solo lectura, sin botones
- * de edición ni de reapertura. El diagnóstico de un caso cerrado no cambia.
+ * «Diagnóstico técnico registrado» (artboard 04c): solo lectura, sin botones de edición ni de
+ * reapertura. Se usa en el caso cerrado y, para el líder (que no diagnostica, D-02), en el caso
+ * Registrado; `children` agrega la acción de cerrar cuando corresponde.
  */
-export function ResumenDiagnostico({ caso }: { caso: CasoDetalle }) {
+export function ResumenDiagnostico({
+  caso,
+  children,
+}: {
+  caso: CasoDetalle
+  children?: ReactNode
+}) {
   const d = caso.diagnostico
   const sugerida = caso.preliminar?.resultado === 'PRELIMINAR' ? caso.preliminar.categoria : null
   const detalle = !d
@@ -59,6 +67,7 @@ export function ResumenDiagnostico({ caso }: { caso: CasoDetalle }) {
           Este caso se cerró sin un diagnóstico registrado en el panel.
         </p>
       )}
+      {children}
     </section>
   )
 }

@@ -24,7 +24,7 @@ import { esErrorApi } from '@/services/apiClient'
 import type { Categoria, ResultadoTecnico } from '@/types/enums'
 import { cn } from '@/utils/cn'
 import { formatearFecha } from '@/utils/fechas'
-import { useCerrarCaso, useRegistrarDiagnostico, useTecnicosAsignables } from '../hooks'
+import { useCerrarCaso, useRegistrarDiagnostico } from '../hooks'
 import { diagnosticoSchema, type DiagnosticoValues } from '../schemas'
 import type { CasoDetalle } from '../types'
 
@@ -37,7 +37,6 @@ const CAMPOS_API: Record<string, keyof DiagnosticoValues> = {
   motivo_visita: 'motivo',
   descripcion: 'descripcion',
   observaciones: 'observaciones',
-  tecnico_responsable_id: 'responsable',
 }
 
 const claveBorrador = (id: string) => `anuc.borrador-diagnostico.${id}`
@@ -118,8 +117,6 @@ function OpcionResultado({
 
 interface FormDiagnosticoProps {
   caso: CasoDetalle
-  esLider: boolean
-  usuarioId: string
   usuarioNombre: string
 }
 
@@ -129,17 +126,15 @@ interface FormDiagnosticoProps {
  * de conservación en 6 meses. El borrador se conserva en sessionStorage (recargas y caídas de
  * conexión) hasta que se guarda.
  */
-export function FormDiagnostico({ caso, esLider, usuarioId, usuarioNombre }: FormDiagnosticoProps) {
+export function FormDiagnostico({ caso, usuarioNombre }: FormDiagnosticoProps) {
   const registrar = useRegistrarDiagnostico(caso.id)
   const cerrar = useCerrarCaso(caso.id)
-  const { data: tecnicos } = useTecnicosAsignables({ enabled: esLider })
   const [intentoFallido, setIntentoFallido] = useState(false)
 
   const p = caso.preliminar
   const sugerida = p?.resultado === 'PRELIMINAR' ? p.categoria : null
   // P-04: «Confirmado» solo cuando hubo una identificación preliminar clara.
   const permiteConfirmar = !!sugerida
-  const eligeResponsable = esLider && !caso.tecnico
   const d = caso.diagnostico
 
   const guardados: DiagnosticoValues = {
@@ -148,8 +143,6 @@ export function FormDiagnostico({ caso, esLider, usuarioId, usuarioNombre }: For
     motivo: d?.motivo_visita ?? '',
     descripcion: d?.descripcion ?? '',
     observaciones: d?.observaciones ?? '',
-    responsable: d?.tecnico_responsable.id ?? caso.tecnico?.id ?? '',
-    eligeResponsable,
   }
 
   const {
@@ -169,7 +162,14 @@ export function FormDiagnostico({ caso, esLider, usuarioId, usuarioNombre }: For
   // «cambios sin guardar».
   useEffect(() => {
     const borrador = leerBorrador(caso.id)
-    if (borrador) reset({ ...borrador, eligeResponsable }, { keepDefaultValues: true })
+    if (borrador) {
+      // Borradores viejos pueden traer campos que ya no existen (responsable): se ignoran.
+      const { resultado, categoria, motivo, descripcion, observaciones } = borrador
+      reset(
+        { resultado, categoria, motivo, descripcion, observaciones },
+        { keepDefaultValues: true },
+      )
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caso.id])
 
@@ -191,7 +191,6 @@ export function FormDiagnostico({ caso, esLider, usuarioId, usuarioNombre }: For
           motivo_visita: v.resultado === 'REQUIERE_VISITA' ? v.motivo.trim() : null,
           descripcion: v.descripcion.trim(),
           observaciones: v.observaciones.trim(),
-          tecnico_responsable_id: esLider ? v.responsable || null : undefined,
         },
         {
           onSuccess: (nuevo) => {
@@ -203,8 +202,6 @@ export function FormDiagnostico({ caso, esLider, usuarioId, usuarioNombre }: For
               motivo: dn.motivo_visita ?? '',
               descripcion: dn.descripcion,
               observaciones: dn.observaciones,
-              responsable: dn.tecnico_responsable.id,
-              eligeResponsable: false,
             })
             toast.exito('Diagnóstico guardado', `Caso #${caso.id} · ya puedes cerrar el caso.`)
           },
@@ -235,7 +232,7 @@ export function FormDiagnostico({ caso, esLider, usuarioId, usuarioNombre }: For
   const sinConexion = (e: unknown) => esErrorApi(e) && e.codigo === 'RED'
   const errorGuardar = registrar.error
   const registrado = caso.estado === 'REGISTRADO' && !!d
-  const puedeCerrar = registrado && !isDirty
+  const puedeCerrar = registrado && caso.puede_cerrar && !isDirty
   const ayudaCerrar = !registrado
     ? 'Guarda el diagnóstico técnico para poder cerrar el caso.'
     : isDirty
@@ -243,7 +240,6 @@ export function FormDiagnostico({ caso, esLider, usuarioId, usuarioNombre }: For
       : 'Al cerrar, se fija la fecha de vencimiento de conservación en 6 meses.'
 
   const nombreCat = (c: string) => etiqueta(CATEGORIA_LABEL, c)
-  const tecnicoPropio = caso.tecnico?.id === usuarioId
 
   return (
     <section
@@ -405,45 +401,23 @@ export function FormDiagnostico({ caso, esLider, usuarioId, usuarioNombre }: For
           />
         </FormField>
 
-        {esLider ? (
-          <FormField
-            label="Técnico responsable"
-            htmlFor="diag-resp"
-            required={eligeResponsable}
-            error={errors.responsable?.message}
+        {/* D-02: quien diagnostica es siempre el técnico asignado; no hay selector. */}
+        <div className="flex flex-col gap-1.5">
+          <span id="diag-resp" className="etiqueta">
+            Técnico responsable
+          </span>
+          <div
+            aria-labelledby="diag-resp"
+            role="group"
+            className="flex h-10 items-center gap-2 rounded-sm border border-borde bg-inactivo-suave px-3 text-cuerpo-sm"
           >
-            <select
-              id="diag-resp"
-              aria-invalid={!!errors.responsable || undefined}
-              aria-describedby={errors.responsable ? fieldDescriptionId('diag-resp') : undefined}
-              className={cn(controlClass, 'h-10 cursor-pointer')}
-              {...register('responsable')}
-            >
-              {eligeResponsable && <option value="">Selecciona el técnico responsable</option>}
-              {(tecnicos ?? []).map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.nombre}
-                  {t.rol === 'LIDER_TECNICO' ? ' (líder técnico)' : ''}
-                </option>
-              ))}
-              {/* Mientras carga la lista, el responsable actual sigue elegido. */}
-              {!tecnicos && caso.tecnico && (
-                <option value={caso.tecnico.id}>{caso.tecnico.nombre}</option>
-              )}
-            </select>
-          </FormField>
-        ) : (
-          <div className="flex flex-col gap-1.5">
-            <span className="etiqueta">Técnico responsable</span>
-            <div className="flex h-10 items-center gap-2 rounded-sm border border-borde bg-inactivo-suave px-3 text-cuerpo-sm">
-              <UserRound size={16} aria-hidden="true" />
-              {tecnicoPropio ? `${usuarioNombre} (tú)` : caso.tecnico?.nombre}
-            </div>
-            <span className="text-nota text-tinta-terciaria">
-              Solo el líder técnico puede reasignar el caso.
-            </span>
+            <UserRound size={16} aria-hidden="true" />
+            {`${usuarioNombre} (tú)`}
           </div>
-        )}
+          <span className="text-nota text-tinta-terciaria">
+            Solo el líder técnico puede reasignar el caso.
+          </span>
+        </div>
 
         <div className="flex flex-col gap-2 pt-1">
           {cerrar.isError && (

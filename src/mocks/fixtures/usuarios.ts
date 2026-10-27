@@ -48,6 +48,17 @@ function crear(): UsuarioFixture[] {
       contrasena: CONTRASENA_DEMO,
       contrasenaTemporal: true,
     },
+    // D-02: el líder no diagnostica con su rol. Si atiende casos, usa esta cuenta de técnico
+    // aparte (otro correo) e ingresa al panel como técnico.
+    {
+      id: 'u-wilmar-tec',
+      nombre: 'Wilmar Torres',
+      correo: 'wilmar.tecnico@anuc.test',
+      celular: '+573134027790',
+      rol: 'TECNICO',
+      activo: true,
+      contrasena: CONTRASENA_DEMO,
+    },
     {
       id: 'u-diana',
       nombre: 'Diana Marcela Rincón',
