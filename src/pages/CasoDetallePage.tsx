@@ -166,12 +166,7 @@ export default function CasoDetallePage() {
         </div>
 
         <div className="lg:col-span-5">
-          <PanelDiagnostico
-            caso={caso}
-            esLider={esLider}
-            usuarioId={usuario?.id ?? ''}
-            usuarioNombre={usuario?.nombre ?? ''}
-          />
+          <PanelDiagnostico caso={caso} usuarioNombre={usuario?.nombre ?? ''} />
         </div>
       </div>
 

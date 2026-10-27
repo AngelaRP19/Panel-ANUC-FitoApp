@@ -6,12 +6,14 @@ import { esErrorApi } from '@/services/apiClient'
 import { useAsignarTecnico, useTecnicosAsignables } from '../hooks'
 import type { CasoResumen, TecnicoAsignable } from '../types'
 
-/** «Técnica · 5 casos activos, 4 en revisión» (carga del técnico, artboard 03b). */
+/**
+ * «Técnico · 5 casos activos, 4 en revisión» (carga del técnico, artboard 03b). La lista solo trae
+ * cuentas de rol técnico: la cuenta de técnico del líder es una más (D-02).
+ */
 function textoCarga(t: TecnicoAsignable) {
-  const rol = t.rol === 'LIDER_TECNICO' ? 'Líder técnico' : 'Técnico'
-  if (t.activos === 0) return `${rol} · 0 casos activos`
+  if (t.activos === 0) return 'Técnico · 0 casos activos'
   const activos = t.activos === 1 ? '1 caso activo' : `${t.activos} casos activos`
-  return `${rol} · ${activos}, ${t.en_revision} en revisión`
+  return `Técnico · ${activos}, ${t.en_revision} en revisión`
 }
 
 interface AsignarTecnicoPanelProps {

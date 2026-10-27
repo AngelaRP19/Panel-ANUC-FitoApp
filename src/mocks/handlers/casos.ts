@@ -26,6 +26,23 @@ function visibles(u: UsuarioFixture): CasoFixture[] {
   return u.rol === 'LIDER_TECNICO' ? casos : casos.filter((c) => c.tecnico?.id === u.id)
 }
 
+/**
+ * Permisos del usuario sobre el caso, calculados en el servidor (guía backend 10.4). El líder
+ * nunca diagnostica (D-02): si atiende casos, usa su cuenta de técnico aparte.
+ */
+function permisosDe(c: CasoFixture, u: UsuarioFixture) {
+  const esLider = u.rol === 'LIDER_TECNICO'
+  const asignado = c.tecnico?.id === u.id
+  return {
+    puede_diagnosticar: !esLider && asignado && ['EN_REVISION', 'REGISTRADO'].includes(c.estado),
+    puede_cerrar: c.estado === 'REGISTRADO' && (esLider || asignado),
+    puede_asignar: esLider && ACTIVOS.includes(c.estado),
+  }
+}
+
+/** Detalle consolidado con los permisos del usuario actual. */
+const detalleCon = (c: CasoFixture, u: UsuarioFixture) => ({ ...detalleDe(c), ...permisosDe(c, u) })
+
 /** Caso que el usuario puede ver, o la respuesta de error (401 / 404). */
 function casoVisible(request: Request, id: string): CasoFixture | Response {
   const u = usuarioActual(request)
@@ -156,7 +173,7 @@ export const casosHandlers = [
   // da 404 para no revelar que existe (guía 6.4).
   http.get(`${API}/casos/:id`, ({ request, params }) => {
     const r = casoVisible(request, String(params.id))
-    return r instanceof Response ? r : HttpResponse.json(detalleDe(r))
+    return r instanceof Response ? r : HttpResponse.json(detalleCon(r, usuarioActual(request)!))
   }),
   http.get(`${API}/casos/:id/evidencias`, ({ request, params }) => {
     const r = casoVisible(request, String(params.id))
@@ -179,16 +196,22 @@ export const casosHandlers = [
       : errorApi(404, 'SIN_ANALISIS', 'El chatbot aún no termina el análisis.')
   }),
 
-  // Guardar el diagnóstico técnico (RQF22): el caso pasa a Registrado.
-  // Lo hace el técnico asignado o el líder (que puede diagnosticar un pendiente eligiendo
-  // el técnico responsable). Se puede volver a guardar mientras el caso no esté cerrado.
+  // Guardar el diagnóstico técnico (RQF22): el caso pasa a Registrado. Solo el técnico asignado
+  // (el responsable es siempre él). El líder recibe 403 (D-02). Se puede volver a guardar
+  // mientras el caso no esté cerrado.
   http.post(`${API}/casos/:id/diagnostico`, async ({ request, params }) => {
     const u = usuarioActual(request)
     if (!u) return noAutenticado()
+    if (u.rol === 'LIDER_TECNICO') {
+      return errorApi(
+        403,
+        'SIN_PERMISO',
+        'El líder técnico no registra diagnósticos. Usa tu cuenta de técnico.',
+      )
+    }
     const caso = visibles(u).find((c) => c.id === params.id)
     if (!caso) return errorApi(404, 'CASO_NO_ENCONTRADO', 'El caso no existe.')
-    const esLider = u.rol === 'LIDER_TECNICO'
-    const permitidos: EstadoCaso[] = esLider ? ACTIVOS : ['EN_REVISION', 'REGISTRADO']
+    const permitidos: EstadoCaso[] = ['EN_REVISION', 'REGISTRADO']
     if (!permitidos.includes(caso.estado)) {
       return errorApi(409, 'ESTADO_INVALIDO', 'Este caso ya no admite diagnóstico.')
     }
@@ -198,7 +221,6 @@ export const casosHandlers = [
       motivo_visita?: string | null
       descripcion?: string
       observaciones?: string
-      tecnico_responsable_id?: string | null
     }
     const campos: Record<string, string> = {}
     if (!b.resultado_tecnico) campos.resultado_tecnico = 'Selecciona un resultado técnico.'
@@ -208,13 +230,10 @@ export const casosHandlers = [
     if (b.resultado_tecnico === 'REQUIERE_VISITA' && !b.motivo_visita?.trim()) {
       campos.motivo_visita = 'Escribe el motivo de la visita.'
     }
-    const responsableId = esLider ? (b.tecnico_responsable_id ?? caso.tecnico?.id) : u.id
-    const responsable = usuarios.find((x) => x.id === responsableId && x.activo)
-    if (!responsable) campos.tecnico_responsable_id = 'Selecciona el técnico responsable.'
     if (Object.keys(campos).length > 0) {
       return errorApi(422, 'VALIDACION', 'Revisa los campos marcados.', campos)
     }
-    caso.tecnico = { id: responsable!.id, nombre: responsable!.nombre }
+    const responsable = u
     caso.estado = 'REGISTRADO'
     caso.diagnostico = {
       resultado_tecnico: b.resultado_tecnico!,
@@ -223,10 +242,10 @@ export const casosHandlers = [
       motivo_visita: b.resultado_tecnico === 'REQUIERE_VISITA' ? b.motivo_visita!.trim() : null,
       descripcion: b.descripcion?.trim() ?? '',
       observaciones: b.observaciones?.trim() ?? '',
-      tecnico_responsable: { id: responsable!.id, nombre: responsable!.nombre },
+      tecnico_responsable: { id: responsable.id, nombre: responsable.nombre },
       registrado_en: new Date().toISOString(),
     }
-    return HttpResponse.json(detalleDe(caso))
+    return HttpResponse.json(detalleCon(caso, u))
   }),
 
   // Cerrar el caso (RQF23): solo con el diagnóstico guardado. Fija el vencimiento en 6 meses.
@@ -249,7 +268,7 @@ export const casosHandlers = [
     caso.estado = 'CERRADO'
     caso.cerrado_en = ahora.toISOString()
     caso.vence_en = vence.toISOString()
-    return HttpResponse.json(detalleDe(caso))
+    return HttpResponse.json(detalleCon(caso, u))
   }),
 
   // Extender la conservación de un caso cerrado (pantalla 22): líder o técnico en sus casos.
@@ -294,7 +313,7 @@ export const casosHandlers = [
         vence_en: caso.vence_en,
       },
     ]
-    return HttpResponse.json(detalleDe(caso))
+    return HttpResponse.json(detalleCon(caso, u))
   }),
 
   // Asignar o reasignar el técnico (solo líder). Pendiente de revisión → En revisión.
@@ -310,7 +329,8 @@ export const casosHandlers = [
       return errorApi(409, 'ESTADO_INVALIDO', 'Este caso ya no admite asignación.')
     }
     const { tecnico_id } = (await request.json()) as { tecnico_id: string }
-    const tecnico = usuarios.find((x) => x.id === tecnico_id && x.activo)
+    // Solo cuentas de rol técnico (D-02): el rol líder no recibe casos.
+    const tecnico = usuarios.find((x) => x.id === tecnico_id && x.activo && x.rol === 'TECNICO')
     if (!tecnico) {
       return errorApi(422, 'TECNICO_INVALIDO', 'El técnico no existe o está deshabilitado.', {
         tecnico_id: 'Elige un técnico activo.',

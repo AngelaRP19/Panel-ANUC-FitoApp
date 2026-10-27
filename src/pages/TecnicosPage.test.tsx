@@ -17,25 +17,25 @@ describe('Técnicos (cuentas del panel)', () => {
         'Cuentas que usan el panel. Los técnicos solo ven los casos que tienen asignados.',
       ),
     ).toBeInTheDocument()
-    await waitFor(() => expect(filas()).toHaveLength(4))
+    await waitFor(() => expect(filas()).toHaveLength(5))
     expect(filas()[0]).toHaveTextContent('Wilmar Torres')
     expect(filas()[0]).toHaveTextContent('Líder técnico')
     expect(filas()[2]).toHaveTextContent('Diana Marcela Rincón')
     expect(filas()[2]).toHaveTextContent('Deshabilitado')
-    expect(screen.getByText('1–4 de 4 cuentas · 10 por página')).toBeInTheDocument()
+    expect(screen.getByText('1–5 de 5 cuentas · 10 por página')).toBeInTheDocument()
   })
 
   it('filtra por rol, estado, carga y búsqueda', async () => {
     const { user } = await renderApp(LIDER, '/tecnicos')
-    await waitFor(() => expect(filas()).toHaveLength(4))
+    await waitFor(() => expect(filas()).toHaveLength(5))
     await user.selectOptions(screen.getByLabelText('Rol'), 'TECNICO')
-    await waitFor(() => expect(filas()).toHaveLength(3))
+    await waitFor(() => expect(filas()).toHaveLength(4))
     await user.selectOptions(screen.getByLabelText('Estado de la cuenta'), 'deshabilitada')
     await waitFor(() => expect(filas()).toHaveLength(1))
     expect(filas()[0]).toHaveTextContent('Diana Marcela Rincón')
     await user.click(screen.getByRole('button', { name: 'Limpiar filtros' }))
     await user.selectOptions(screen.getByLabelText('Carga de casos'), 'sin')
-    await waitFor(() => expect(filas()).toHaveLength(2))
+    await waitFor(() => expect(filas()).toHaveLength(3))
     await user.selectOptions(screen.getByLabelText('Carga de casos'), '')
     await user.type(screen.getByRole('searchbox', { name: 'Buscar técnico' }), 'sanabria')
     await waitFor(() => expect(filas()[0]).toHaveTextContent('Jhon Fredy Sanabria'))
@@ -44,7 +44,7 @@ describe('Técnicos (cuentas del panel)', () => {
 
   it('desactiva un técnico con confirmación y explica qué pasa con sus casos', async () => {
     const { user } = await renderApp(LIDER, '/tecnicos')
-    await waitFor(() => expect(filas()).toHaveLength(4))
+    await waitFor(() => expect(filas()).toHaveLength(5))
     await user.click(screen.getByRole('button', { name: 'Ana Lucía Becerra. Ver datos' }))
     const ficha = await screen.findByRole('dialog', { name: /Ana Lucía Becerra/ })
     expect(within(ficha).getByText('Técnico · ve solo sus casos asignados')).toBeInTheDocument()
@@ -121,7 +121,7 @@ describe('Técnicos (cuentas del panel)', () => {
     expect(
       screen.getByText('Camila Rodríguez recibirá una contraseña temporal en camila@anuc.org.'),
     ).toBeInTheDocument()
-    await waitFor(() => expect(filas()).toHaveLength(5))
+    await waitFor(() => expect(filas()).toHaveLength(6))
   })
 
   it('edita los datos de un técnico', async () => {
