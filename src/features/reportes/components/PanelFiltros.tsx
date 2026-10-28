@@ -798,12 +798,6 @@ function CamposPanel({
           onCambiar={onCambiar}
           opciones={[{ valor: '1', etiqueta: 'Con casos pendientes sin revisar' }]}
         />
-        <Casillas
-          clave="con_extensiones"
-          borrador={borrador}
-          onCambiar={onCambiar}
-          opciones={[{ valor: '1', etiqueta: 'Con extensiones de conservación' }]}
-        />
       </Grupo>
     </>
   )

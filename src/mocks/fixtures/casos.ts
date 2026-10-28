@@ -32,14 +32,10 @@ export interface CasoFixture {
   enviado_a_panel_en: string | null
   /** Fecha de vencimiento de conservación: se fija al cerrar el caso (6 meses). */
   vence_en: string | null
-  /** El vencimiento se extendió (pantalla 22). */
-  conservacion_extendida: boolean
   /** Diagnóstico guardado en el panel (pantalla 7). Sin definir: se genera para el diseño. */
   diagnostico?: DiagnosticoFixture | null
   /** Fecha real de cierre (cuando se cierra desde el panel). */
   cerrado_en?: string | null
-  /** Extensiones de conservación hechas desde el panel (pantalla 22). */
-  extensiones?: { por: string; en: string; justificacion: string; vence_en: string }[]
 }
 
 export interface DiagnosticoFixture {
@@ -479,23 +475,20 @@ function preliminar(categoria: CategoriaDiseno, porcentaje: number): CasoFixture
 
 const MS_DIA = 86_400_000
 
-// Casos cerrados con vencimiento cercano o extendido, para probar el filtro de conservación.
+// Casos cerrados con vencimiento cercano, para probar el filtro de conservación.
 // El resto vence 6 meses después del envío (aproximación al cierre).
-const VENCIMIENTOS: Record<string, { vence: string; extendida?: boolean }> = {
-  '0216': { vence: '2026-10-22 23:59' },
-  '0217': { vence: '2026-11-05 23:59' },
-  '0219': { vence: '2027-09-09 23:59', extendida: true },
-  '0226': { vence: '2027-03-22 10:05' },
+const VENCIMIENTOS: Record<string, string> = {
+  '0216': '2026-10-22 23:59',
+  '0217': '2026-11-05 23:59',
+  '0226': '2027-03-22 10:05',
 }
 
 function vencimiento(codigo: string, estado: EstadoCaso, enviado: string | null) {
-  if (estado !== 'CERRADO' || !enviado) return { vence_en: null, conservacion_extendida: false }
+  if (estado !== 'CERRADO' || !enviado) return { vence_en: null }
   const especial = VENCIMIENTOS[codigo]
-  if (especial) {
-    return { vence_en: bogota(especial.vence), conservacion_extendida: !!especial.extendida }
-  }
+  if (especial) return { vence_en: bogota(especial) }
   const vence = new Date(new Date(bogota(enviado)).getTime() + 182 * MS_DIA).toISOString()
-  return { vence_en: vence, conservacion_extendida: false }
+  return { vence_en: vence }
 }
 
 export const casos: CasoFixture[] = FILAS.map(

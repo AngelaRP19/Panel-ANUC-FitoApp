@@ -1,5 +1,4 @@
 import {
-  ArchiveRestore,
   Ban,
   Camera,
   ClipboardCheck,
@@ -21,7 +20,6 @@ const ICONO: Record<string, LucideIcon> = {
   ASIGNADO: UserCheck,
   DIAGNOSTICO: ClipboardCheck,
   CIERRE: Lock,
-  EXTENSION: ArchiveRestore,
   DESCARTE: Ban,
 }
 

@@ -116,16 +116,3 @@ export async function cerrarCaso(id: string): Promise<CasoDetalle> {
   const { data } = await api.post<CasoDetalle>(ruta(id, '/cierre'))
   return data
 }
-
-/** Extiende la conservación de un caso cerrado (pantalla 22). `venceEn`: «aaaa-mm-dd». */
-export async function extenderConservacion(
-  id: string,
-  venceEn: string,
-  justificacion: string,
-): Promise<CasoDetalle> {
-  const { data } = await api.post<CasoDetalle>(ruta(id, '/conservacion'), {
-    vence_en: venceEn,
-    justificacion,
-  })
-  return data
-}

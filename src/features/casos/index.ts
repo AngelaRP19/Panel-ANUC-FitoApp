@@ -17,4 +17,3 @@ export {
 } from './components/VentanasCaso'
 export { Timeline } from './components/Timeline'
 export { PanelDiagnostico } from './components/PanelDiagnostico'
-export { ExtenderConservacionDialog } from './components/ExtenderConservacionDialog'
