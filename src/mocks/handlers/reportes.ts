@@ -1353,7 +1353,7 @@ export const reportesHandlers = [
     return HttpResponse.json(consultas.map(conResultado))
   }),
 
-  // Guardar consulta (F5): nombre de 5 a 60 caracteres, reporte, visibilidad y envío.
+  // Guardar consulta (F5): nombre de 5 a 60 caracteres, reporte y visibilidad.
   http.post(`${API}/reportes/consultas`, async ({ request }) => {
     const u = usuarioActual(request)
     const bloqueo = soloLider(request)
@@ -1364,12 +1364,6 @@ export const reportesHandlers = [
     if (nombre.length < 5 || nombre.length > 60)
       campos.nombre = 'Escribe un nombre de 5 a 60 caracteres.'
     if (!esTipoReporte(b.tipo)) campos.tipo = 'Elige el reporte.'
-    if (b.envio && b.envio.frecuencia !== 'no') {
-      const correos = b.envio.correos ?? []
-      if (!correos.length || correos.some((c) => !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(c))) {
-        campos.correos = 'Escribe uno o más correos válidos separados por coma.'
-      }
-    }
     if (Object.keys(campos).length)
       return errorApi(422, 'VALIDACION', 'Revisa los campos marcados.', campos)
     const nueva: ConsultaFixture = {
@@ -1379,7 +1373,8 @@ export const reportesHandlers = [
       descripcion: b.descripcion?.trim() || REPORTES[b.tipo as TipoReporte].titulo,
       filtros: b.filtros ?? {},
       visibilidad: b.visibilidad === 'yo' ? 'yo' : 'equipo',
-      envio: b.envio && b.envio.frecuencia !== 'no' ? b.envio : null,
+      // Sin envío programado (D-21): se ignora `envio` si llega.
+      envio: null,
       creada_por: u!.nombre,
     }
     consultas.unshift(nueva)
