@@ -9,6 +9,7 @@ export const PATHS = {
   caso: (id: string) => `/casos/${encodeURIComponent(id)}`,
   alertas: '/alertas',
   mensajeAlerta: (id: string) => `/alertas/${encodeURIComponent(id)}/mensaje`,
+  correccionAlerta: (id: string) => `/alertas/${encodeURIComponent(id)}/correccion`,
   mapa: '/mapa',
   reportes: '/reportes',
   productores: '/productores',

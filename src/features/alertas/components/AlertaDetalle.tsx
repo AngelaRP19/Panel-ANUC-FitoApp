@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
-import { Ban, BellOff, BellRing, Check, ClipboardList, Lock, PenLine } from 'lucide-react'
+import { Ban, BellOff, BellRing, Check, ClipboardList, Lock, PenLine, Undo2 } from 'lucide-react'
 import { Aviso } from '@/components/ui/Aviso'
 import { Button, buttonClass } from '@/components/ui/Button'
 import { EstadoAlertaBadge } from '@/components/ui/EstadoBadge'
@@ -91,11 +91,28 @@ export function AlertaDetalle({ alerta: a, esLider }: AlertaDetalleProps) {
             Motivo: {a.descarte.motivo}
           </Aviso>
         )}
-        {a.estado === 'COMUNICADA' && (
+        {(a.estado === 'COMUNICADA' || a.estado === 'CORREGIDA') && (
           <Aviso tono="ok">
             Mensaje enviado a {a.productores_notificados ?? 0} productores
             {a.comunicada_en ? ` el ${formatearFechaHora(a.comunicada_en)}` : ''}.
           </Aviso>
+        )}
+        {a.estado === 'CORREGIDA' && a.correccion && (
+          <section
+            aria-label="Corrección enviada"
+            className="rounded-md border border-borde bg-info-suave px-4 py-3"
+          >
+            <div className="flex flex-wrap items-center gap-2 text-cuerpo-sm font-semibold text-info">
+              <Undo2 size={16} aria-hidden="true" />
+              Corrección enviada
+              {a.correccion.por ? ` por ${a.correccion.por.nombre}` : ''}
+              {a.correccion.en ? ` el ${formatearFechaHora(a.correccion.en)}` : ''}
+            </div>
+            <p className="mt-1 text-cuerpo-sm text-tinta-secundaria">{a.correccion.mensaje}</p>
+            <p className="mt-1 text-nota text-tinta-terciaria">
+              Se envió a los mismos productores que recibieron la alerta.
+            </p>
+          </section>
         )}
       </div>
 
@@ -161,6 +178,18 @@ export function AlertaDetalle({ alerta: a, esLider }: AlertaDetalleProps) {
           <Link to={PATHS.mensajeAlerta(a.id)} className={buttonClass('primary')}>
             <PenLine aria-hidden="true" />
             Redactar mensaje
+          </Link>
+        </div>
+      )}
+      {esLider && a.estado === 'COMUNICADA' && (
+        <div className={PIE}>
+          <span className="text-cuerpo-sm text-tinta-terciaria">
+            ¿Se envió por error? Puedes enviar una corrección a los mismos productores, una sola
+            vez.
+          </span>
+          <Link to={PATHS.correccionAlerta(a.id)} className={buttonClass('secondary')}>
+            <Undo2 aria-hidden="true" />
+            Corregir alerta
           </Link>
         </div>
       )}

@@ -23,7 +23,7 @@ import {
   textoProductores,
 } from '../utils'
 import { DestinatariosVeredas } from './DestinatariosVeredas'
-import { VistaPreviaWhatsApp } from './VistaPreviaWhatsApp'
+import { HuecoPlantilla, VistaPreviaWhatsApp } from './VistaPreviaWhatsApp'
 
 /** «Juracambita», «Juracambita y Centro», «Juracambita, Centro y San Luis». */
 function unirVeredas(v: Vereda[]) {
@@ -204,7 +204,13 @@ export function MensajeProductores({ alerta }: { alerta: Alerta }) {
         </section>
 
         <div className="flex flex-col gap-5 lg:col-span-5">
-          <VistaPreviaWhatsApp categoria={cat} recomendacion={mensaje} />
+          <VistaPreviaWhatsApp>
+            <b className="font-bold">{PLANTILLA_MENSAJE.inicio}</b>
+            {PLANTILLA_MENSAJE.antesCategoria}
+            <b className="font-bold">{cat}</b>
+            {PLANTILLA_MENSAJE.antesMensaje}
+            {mensaje.trim() ? mensaje : <HuecoPlantilla>[mensaje]</HuecoPlantilla>}
+          </VistaPreviaWhatsApp>
           <DestinatariosVeredas
             datos={destinatarios.data}
             cargando={destinatarios.isPending}

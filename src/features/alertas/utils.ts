@@ -11,6 +11,7 @@ export function tituloAlerta(a: AlertaResumen) {
   const cat = CATEGORIA_LABEL[a.categoria]
   if (a.estado === 'CONFIRMADA') return `Alerta fitosanitaria confirmada · ${cat}`
   if (a.estado === 'COMUNICADA') return `Alerta fitosanitaria comunicada · ${cat}`
+  if (a.estado === 'CORREGIDA') return `Alerta fitosanitaria corregida · ${cat}`
   return `Posible concentración de ${cat}`
 }
 
@@ -20,6 +21,7 @@ export function tituloDetalle(a: AlertaResumen) {
   const vereda = VEREDA_LABEL[a.vereda]
   if (a.estado === 'CONFIRMADA') return `Alerta fitosanitaria confirmada: ${cat} en ${vereda}`
   if (a.estado === 'COMUNICADA') return `Alerta fitosanitaria comunicada: ${cat} en ${vereda}`
+  if (a.estado === 'CORREGIDA') return `Alerta fitosanitaria corregida: ${cat} en ${vereda}`
   return `Posible concentración de ${cat} en ${vereda}`
 }
 
@@ -34,6 +36,8 @@ export function subtituloAlerta(a: AlertaResumen) {
       return `${vereda} · ${a.confirmada_por ? `confirmada por ${a.confirmada_por.nombre} · ` : ''}falta comunicar`
     case 'COMUNICADA':
       return `${vereda} · mensaje enviado a ${a.productores_notificados ?? 0} productores`
+    case 'CORREGIDA':
+      return `${vereda} · corrección enviada a ${a.productores_notificados ?? 0} productores`
     case 'DESCARTADA': {
       const m = a.motivo_descarte
       return m ? `${vereda} · ${m.charAt(0).toLowerCase()}${m.slice(1)}` : `${vereda} · descartada`
@@ -52,6 +56,8 @@ export function situacionAlerta(a: AlertaResumen) {
       return a.confirmada_por ? `confirmada por ${a.confirmada_por.nombre}` : 'confirmada'
     case 'COMUNICADA':
       return `comunicada a ${a.productores_notificados ?? 0} productores`
+    case 'CORREGIDA':
+      return 'corregida'
     case 'DESCARTADA':
       return 'descartada'
     default:
@@ -87,6 +93,18 @@ export const PLANTILLA_MENSAJE = {
   inicio: 'Alerta fitosanitaria:',
   antesCategoria: ' se ha identificado una concentración de casos de ',
   antesMensaje: ' en una zona determinada. Recomendación del técnico: ',
+}
+
+/**
+ * Plantilla fija de la corrección (D-17), igual a la del backend (`PLANTILLA_CORRECCION`):
+ * «… el mensaje de alerta sobre [categoría] enviado el [fecha] no aplica. … [explicación]».
+ * Texto provisional hasta que el equipo lo valide (P-B12).
+ */
+export const PLANTILLA_CORRECCION = {
+  inicio: 'Aviso fitosanitario:',
+  antesCategoria: ' el mensaje de alerta sobre ',
+  antesFecha: ' enviado el ',
+  antesMensaje: ' no aplica. Por favor, haga caso omiso de ese mensaje. ',
 }
 
 const claveBorrador = (id: string) => `anuc.borrador-mensaje-alerta.${id}`

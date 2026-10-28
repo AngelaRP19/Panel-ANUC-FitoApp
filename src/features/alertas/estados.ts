@@ -8,4 +8,5 @@ export const ESTADO_ALERTA_TONO: Record<EstadoAlerta, BadgeTone> = {
   DESCARTADA: 'inactive',
   CONFIRMADA: 'danger',
   COMUNICADA: 'success',
+  CORREGIDA: 'info',
 }

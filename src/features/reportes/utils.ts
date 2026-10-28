@@ -122,6 +122,7 @@ const ESTADO_ALERTA: Record<string, string> = {
   CONFIRMADA: 'Confirmada',
   COMUNICADA: 'Comunicada',
   DESCARTADA: 'Descartada',
+  CORREGIDA: 'Corregida',
 }
 const RESULTADO: Record<string, string> = {
   CONFIRMADO: 'Confirmado',

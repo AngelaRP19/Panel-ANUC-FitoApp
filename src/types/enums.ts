@@ -55,6 +55,8 @@ export const EstadoAlerta = {
   DESCARTADA: 'DESCARTADA',
   CONFIRMADA: 'CONFIRMADA',
   COMUNICADA: 'COMUNICADA',
+  /** La alerta comunicada se envió por error y se mandó una corrección (D-17). */
+  CORREGIDA: 'CORREGIDA',
 } as const
 export type EstadoAlerta = (typeof EstadoAlerta)[keyof typeof EstadoAlerta]
 

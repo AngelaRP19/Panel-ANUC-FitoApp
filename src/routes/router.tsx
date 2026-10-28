@@ -2,6 +2,7 @@ import { lazy, Suspense, type ReactNode } from 'react'
 import { createBrowserRouter, type RouteObject } from 'react-router'
 import type { RouteHandle } from '@/components/layout/AppLayout'
 import { Spinner } from '@/components/ui/Spinner'
+import AlertaCorreccionPage from '@/pages/AlertaCorreccionPage'
 import AlertaMensajePage from '@/pages/AlertaMensajePage'
 import AlertasPage from '@/pages/AlertasPage'
 import CasoDetallePage from '@/pages/CasoDetallePage'
@@ -107,6 +108,11 @@ export const rutas: RouteObject[] = [
               {
                 path: '/alertas/:id/mensaje',
                 element: <AlertaMensajePage />,
+                handle: titulo('Alertas'),
+              },
+              {
+                path: '/alertas/:id/correccion',
+                element: <AlertaCorreccionPage />,
                 handle: titulo('Alertas'),
               },
               { path: PATHS.mapa, element: <MapaPage />, handle: titulo('Mapa de vigilancia') },

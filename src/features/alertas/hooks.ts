@@ -4,6 +4,7 @@ import { useUrlFilters } from '@/hooks/useUrlFilters'
 import {
   comunicarAlerta,
   confirmarAlerta,
+  corregirAlerta,
   descartarAlerta,
   guardarBorradorMensaje,
   guardarParametros,
@@ -99,6 +100,14 @@ export function useComunicarAlerta(id: string) {
   const actualizar = useAlActualizar()
   return useMutation({
     mutationFn: (b: BorradorMensaje) => comunicarAlerta(id, b),
+    onSuccess: actualizar,
+  })
+}
+
+export function useCorregirAlerta(id: string) {
+  const actualizar = useAlActualizar()
+  return useMutation({
+    mutationFn: (mensaje: string) => corregirAlerta(id, mensaje),
     onSuccess: actualizar,
   })
 }

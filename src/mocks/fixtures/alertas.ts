@@ -28,6 +28,8 @@ export interface AlertaFixture {
   productores_notificados: number | null
   comunicada_en: string | null
   descarte: { motivo: string; por: Persona; en: string } | null
+  /** Corrección enviada por error de comunicación (D-17). */
+  correccion: { mensaje: string; por: Persona; en: string } | null
   /** Mensaje a productores guardado como borrador (pantalla 12). */
   borrador: { mensaje: string; veredas: Vereda[]; guardado_en: string } | null
   /** Cuentas que pidieron «Avisarme cuando cambie». */
@@ -65,6 +67,7 @@ function alerta(
     productores_notificados: null,
     comunicada_en: null,
     descarte: null,
+    correccion: null,
     borrador: null,
     seguidores: [],
     ...extra,

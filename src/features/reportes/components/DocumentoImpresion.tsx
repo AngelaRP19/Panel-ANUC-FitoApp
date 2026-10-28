@@ -44,6 +44,7 @@ const TONO_ESTADO: Record<string, Tono> = {
   [ESTADO_ALERTA_LABEL.CONFIRMADA]: 'danger',
   [ESTADO_ALERTA_LABEL.COMUNICADA]: 'success',
   [ESTADO_ALERTA_LABEL.DESCARTADA]: 'inactive',
+  [ESTADO_ALERTA_LABEL.CORREGIDA]: 'info',
   Activo: 'success',
   Activa: 'success',
   Deshabilitado: 'inactive',
