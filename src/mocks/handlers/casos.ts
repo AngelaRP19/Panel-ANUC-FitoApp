@@ -13,7 +13,8 @@ import { usuarios, type UsuarioFixture } from '../fixtures/usuarios'
 import { API, errorApi, noAutenticado, usuarioActual } from './comun'
 
 const MS_DIA = 86_400_000
-const ACTIVOS: EstadoCaso[] = ['PENDIENTE_REVISION', 'EN_REVISION', 'REGISTRADO']
+/** Igual que `ESTADOS_ASIGNABLES` del backend: un caso Registrado ya no se reasigna (D-22). */
+const ASIGNABLES: EstadoCaso[] = ['PENDIENTE_REVISION', 'EN_REVISION']
 
 const normalizar = (t: string) => t.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
 
@@ -34,9 +35,10 @@ function permisosDe(c: CasoFixture, u: UsuarioFixture) {
   const esLider = u.rol === 'LIDER_TECNICO'
   const asignado = c.tecnico?.id === u.id
   return {
-    puede_diagnosticar: !esLider && asignado && ['EN_REVISION', 'REGISTRADO'].includes(c.estado),
+    // D-22: solo En revisión. Un caso Registrado ya no se edita; solo pasa a Cerrado.
+    puede_diagnosticar: !esLider && asignado && c.estado === 'EN_REVISION',
     puede_cerrar: c.estado === 'REGISTRADO' && (esLider || asignado),
-    puede_asignar: esLider && ACTIVOS.includes(c.estado),
+    puede_asignar: esLider && ASIGNABLES.includes(c.estado),
   }
 }
 
@@ -210,9 +212,16 @@ export const casosHandlers = [
     }
     const caso = visibles(u).find((c) => c.id === params.id)
     if (!caso) return errorApi(404, 'CASO_NO_ENCONTRADO', 'El caso no existe.')
-    const permitidos: EstadoCaso[] = ['EN_REVISION', 'REGISTRADO']
-    if (!permitidos.includes(caso.estado)) {
-      return errorApi(409, 'ESTADO_INVALIDO', 'Este caso ya no admite diagnóstico.')
+    // Mismas respuestas que el backend (D-22): el diagnóstico se guarda una sola vez.
+    if (caso.estado !== 'EN_REVISION') {
+      const yaTiene = caso.estado === 'REGISTRADO' || caso.estado === 'CERRADO'
+      return errorApi(
+        409,
+        'TRANSICION_INVALIDA',
+        yaTiene
+          ? 'Este caso ya tiene diagnóstico.'
+          : 'El caso debe estar En revisión para diagnosticarlo.',
+      )
     }
     const b = (await request.json()) as {
       resultado_tecnico?: ResultadoTecnico
@@ -279,8 +288,8 @@ export const casosHandlers = [
     }
     const caso = casos.find((c) => c.id === params.id)
     if (!caso) return errorApi(404, 'CASO_NO_ENCONTRADO', 'El caso no existe.')
-    if (!ACTIVOS.includes(caso.estado)) {
-      return errorApi(409, 'ESTADO_INVALIDO', 'Este caso ya no admite asignación.')
+    if (!ASIGNABLES.includes(caso.estado)) {
+      return errorApi(409, 'TRANSICION_INVALIDA', 'El caso ya no admite asignación.')
     }
     const { tecnico_id } = (await request.json()) as { tecnico_id: string }
     // Solo cuentas de rol técnico (D-02): el rol líder no recibe casos.

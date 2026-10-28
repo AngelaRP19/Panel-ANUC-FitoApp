@@ -88,7 +88,7 @@ export function CasoEncabezado({
             <Leaf aria-hidden="true" />
             Productor y finca
           </Button>
-          {esLider && activo && (
+          {caso.puede_asignar && (
             <Button variant="secondary" onClick={onReasignar}>
               <UserPlus aria-hidden="true" />
               {caso.tecnico ? 'Reasignar técnico' : 'Asignar técnico'}

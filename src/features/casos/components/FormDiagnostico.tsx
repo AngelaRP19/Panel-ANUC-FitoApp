@@ -4,7 +4,6 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import {
   Check,
   CircleHelp,
-  Lock,
   MapPin,
   RotateCcw,
   Shuffle,
@@ -16,15 +15,13 @@ import { Aviso } from '@/components/ui/Aviso'
 import { Button } from '@/components/ui/Button'
 import { fieldDescriptionId, FormField } from '@/components/ui/FormField'
 import { controlClass } from '@/components/ui/Input'
-import { ResultadoTecnicoBadge } from '@/components/ui/ResultadoTecnicoBadge'
 import { Textarea } from '@/components/ui/Textarea'
 import { toast } from '@/components/ui/Toast'
 import { CATEGORIA_LABEL, MENSAJES, etiqueta } from '@/locales/es'
 import { esErrorApi } from '@/services/apiClient'
 import type { Categoria, ResultadoTecnico } from '@/types/enums'
 import { cn } from '@/utils/cn'
-import { formatearFecha } from '@/utils/fechas'
-import { useCerrarCaso, useRegistrarDiagnostico } from '../hooks'
+import { useRegistrarDiagnostico } from '../hooks'
 import { diagnosticoSchema, type DiagnosticoValues } from '../schemas'
 import type { CasoDetalle } from '../types'
 
@@ -121,14 +118,13 @@ interface FormDiagnosticoProps {
 }
 
 /**
- * «Resultado técnico · decisión humana» (artboards 04, 04b, 12c · RQF22, RQF23).
- * Guardar deja el caso en Registrado; «Cerrar caso» se habilita después y fija el vencimiento
- * de conservación en 6 meses. El borrador se conserva en sessionStorage (recargas y caídas de
- * conexión) hasta que se guarda.
+ * «Resultado técnico · decisión humana» (artboards 04, 04b, 12c · RQF22, RQF23). Solo se muestra
+ * con el caso En revisión: guardar deja el caso en Registrado, y desde ahí el diagnóstico queda en
+ * solo lectura y únicamente se puede cerrar el caso (D-22). El borrador se conserva en
+ * sessionStorage (recargas y caídas de conexión) hasta que se guarda.
  */
 export function FormDiagnostico({ caso, usuarioNombre }: FormDiagnosticoProps) {
   const registrar = useRegistrarDiagnostico(caso.id)
-  const cerrar = useCerrarCaso(caso.id)
   const [intentoFallido, setIntentoFallido] = useState(false)
 
   const p = caso.preliminar
@@ -193,16 +189,9 @@ export function FormDiagnostico({ caso, usuarioNombre }: FormDiagnosticoProps) {
           observaciones: v.observaciones.trim(),
         },
         {
-          onSuccess: (nuevo) => {
+          onSuccess: () => {
+            // El caso pasa a Registrado y el panel cambia al diagnóstico en solo lectura.
             guardarBorrador(caso.id, null)
-            const dn = nuevo.diagnostico!
-            reset({
-              resultado: dn.resultado_tecnico,
-              categoria: dn.categoria_determinada ?? '',
-              motivo: dn.motivo_visita ?? '',
-              descripcion: dn.descripcion,
-              observaciones: dn.observaciones,
-            })
             toast.exito('Diagnóstico guardado', `Caso #${caso.id} · ya puedes cerrar el caso.`)
           },
           onError: (error) => {
@@ -218,26 +207,8 @@ export function FormDiagnostico({ caso, usuarioNombre }: FormDiagnosticoProps) {
     () => setIntentoFallido(true),
   )
 
-  const cerrarCaso = () =>
-    cerrar.mutate(undefined, {
-      onSuccess: (nuevo) => {
-        guardarBorrador(caso.id, null)
-        toast.exito(
-          'Caso cerrado',
-          `Caso #${caso.id} · las evidencias se conservan hasta el ${formatearFecha(nuevo.vence_en)}.`,
-        )
-      },
-    })
-
   const sinConexion = (e: unknown) => esErrorApi(e) && e.codigo === 'RED'
   const errorGuardar = registrar.error
-  const registrado = caso.estado === 'REGISTRADO' && !!d
-  const puedeCerrar = registrado && caso.puede_cerrar && !isDirty
-  const ayudaCerrar = !registrado
-    ? 'Guarda el diagnóstico técnico para poder cerrar el caso.'
-    : isDirty
-      ? 'Guarda los cambios del diagnóstico antes de cerrar el caso.'
-      : 'Al cerrar, se fija la fecha de vencimiento de conservación en 6 meses.'
 
   const nombreCat = (c: string) => etiqueta(CATEGORIA_LABEL, c)
 
@@ -251,21 +222,6 @@ export function FormDiagnostico({ caso, usuarioNombre }: FormDiagnosticoProps) {
         <h2 id="t-diag" className="mt-1 titulo-h2">
           Registrar diagnóstico técnico
         </h2>
-        {registrado && (
-          <p className="mt-3 flex flex-wrap items-center gap-2 text-cuerpo-sm">
-            <span className="text-tinta-secundaria">Registrado:</span>
-            <ResultadoTecnicoBadge
-              resultado={d.resultado_tecnico}
-              detalle={
-                d.resultado_tecnico === 'CONFIRMADO' && sugerida
-                  ? nombreCat(sugerida)
-                  : d.categoria_determinada
-                    ? nombreCat(d.categoria_determinada)
-                    : null
-              }
-            />
-          </p>
-        )}
       </div>
 
       <form noValidate onSubmit={enviar} className="flex flex-col gap-5 px-6 pt-5 pb-6">
@@ -420,38 +376,12 @@ export function FormDiagnostico({ caso, usuarioNombre }: FormDiagnosticoProps) {
         </div>
 
         <div className="flex flex-col gap-2 pt-1">
-          {cerrar.isError && (
-            <Aviso tono="peligro" titulo="No se cerró el caso.">
-              {sinConexion(cerrar.error)
-                ? 'Se perdió la conexión. Intenta de nuevo.'
-                : esErrorApi(cerrar.error)
-                  ? cerrar.error.message
-                  : null}
-            </Aviso>
-          )}
-          <div className="flex flex-wrap gap-2">
-            <Button
-              type="submit"
-              className="flex-1"
-              loading={registrar.isPending}
-              disabled={cerrar.isPending}
-            >
-              Guardar diagnóstico
-            </Button>
-            <Button
-              variant="secondary"
-              className="flex-1"
-              disabled={!puedeCerrar || registrar.isPending}
-              loading={cerrar.isPending}
-              onClick={cerrarCaso}
-              aria-describedby="ayuda-cerrar"
-            >
-              <Lock aria-hidden="true" />
-              Cerrar caso
-            </Button>
-          </div>
-          <p id="ayuda-cerrar" className="text-nota text-tinta-terciaria">
-            {ayudaCerrar}
+          <Button type="submit" loading={registrar.isPending} aria-describedby="ayuda-guardar">
+            Guardar diagnóstico
+          </Button>
+          <p id="ayuda-guardar" className="text-nota text-tinta-terciaria">
+            Al guardar, el caso pasa a Registrado: el diagnóstico ya no se puede editar ni el caso
+            reasignarse, y solo queda cerrarlo.
           </p>
         </div>
       </form>

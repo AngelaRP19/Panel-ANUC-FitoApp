@@ -169,13 +169,7 @@ export interface Cuestionario {
 }
 
 export type TipoEventoHistorial =
-  | 'CREADO'
-  | 'ANALISIS'
-  | 'ENVIADO'
-  | 'ASIGNADO'
-  | 'DIAGNOSTICO'
-  | 'CIERRE'
-  | 'DESCARTE'
+  'CREADO' | 'ANALISIS' | 'ENVIADO' | 'ASIGNADO' | 'DIAGNOSTICO' | 'CIERRE' | 'DESCARTE'
 
 /** Paso del historial (GET /casos/{id}/historial). Los pasos futuros llegan con `pendiente`. */
 export interface EventoHistorial {

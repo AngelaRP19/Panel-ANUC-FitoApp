@@ -22,7 +22,12 @@ const MENSAJE_BLOQUEADO = 'El mensaje no puede recomendar productos, dosis ni tr
 const RECETA =
   /\b(dosis|dosific\w*|dilu\w+|mezcl\w+|aplic\w+|fumig\w+|asperj\w+|roci\w+|insecticidas?|fungicidas?|pesticidas?|plaguicidas?|agroquimic\w+|veneno\w*|fertiliz\w+|abono\w*|tratamientos?|tratar\w*|productos?|remedios?|curar|cura)\b/
 const recetaTratamiento = (t: string) =>
-  RECETA.test(t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase())
+  RECETA.test(
+    t
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase(),
+  )
 
 /** Estados en los que el líder todavía decide (confirmar o descartar). */
 const ABIERTAS = ['GENERADA', 'EN_REVISION']

@@ -15,12 +15,7 @@ import { MENSAJES } from '@/locales/es'
 import { esErrorApi } from '@/services/apiClient'
 import { cn } from '@/utils/cn'
 import { useConsultas, useEliminarConsulta, useExportarCsv, useGuardarConsulta } from '../hooks'
-import type {
-  ConsultaGuardada,
-  FiltrosReporte,
-  TipoReporte,
-  Visibilidad,
-} from '../types'
+import type { ConsultaGuardada, FiltrosReporte, TipoReporte, Visibilidad } from '../types'
 import { REPORTES, resumenFiltros, TIPOS_REPORTE, urlReporte } from '../utils'
 
 const RADIO =
@@ -219,9 +214,7 @@ export function ConsultasGuardadas({ onGuardarActuales }: { onGuardarActuales: (
             >
               <div className="min-w-0 flex-1">
                 <div className="font-semibold">{c.nombre}</div>
-                <div className="text-cuerpo-sm text-tinta-terciaria">
-                  {c.descripcion}
-                </div>
+                <div className="text-cuerpo-sm text-tinta-terciaria">{c.descripcion}</div>
               </div>
               <span className="text-cuerpo-sm font-semibold tabular-nums">{c.resultado}</span>
               <span className="inline-flex h-6 items-center rounded-sm border border-borde bg-neutro-suave px-2 text-xs font-semibold text-neutro">

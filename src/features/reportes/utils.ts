@@ -275,14 +275,7 @@ export const CLAVES_PANEL: Record<PanelFiltros, string[]> = {
     'con_activos',
     'chatbot',
   ],
-  tecnicos: [
-    'tecnicos',
-    'rol',
-    'estado_cuenta',
-    'dias_desde',
-    'dias_hasta',
-    'con_pendientes',
-  ],
+  tecnicos: ['tecnicos', 'rol', 'estado_cuenta', 'dias_desde', 'dias_hasta', 'con_pendientes'],
 }
 
 /** URL de un reporte con unos filtros (consultas guardadas, tarjetas del índice). */

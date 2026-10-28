@@ -14,9 +14,12 @@ describe('Diagnóstico técnico y cierre', () => {
   it('valida el resultado y los campos condicionales sin vaciar el formulario', async () => {
     const { user } = await renderApp(TECNICO, '/casos/0241')
     await screen.findByRole('heading', { name: 'Registrar diagnóstico técnico' })
-    expect(screen.getByRole('button', { name: /Cerrar caso/ })).toBeDisabled()
+    // En revisión no hay «Cerrar caso»: primero se registra el diagnóstico (D-22).
+    expect(screen.queryByRole('button', { name: /Cerrar caso/ })).toBeNull()
     expect(
-      screen.getByText('Guarda el diagnóstico técnico para poder cerrar el caso.'),
+      screen.getByText(
+        /Al guardar, el caso pasa a Registrado: el diagnóstico ya no se puede editar/,
+      ),
     ).toBeInTheDocument()
 
     await user.type(screen.getByLabelText('Descripción'), 'Moho gris en frutos.')
@@ -40,7 +43,7 @@ describe('Diagnóstico técnico y cierre', () => {
     expect(screen.getByLabelText('Descripción')).toHaveValue('Moho gris en frutos.')
   })
 
-  it('guarda el diagnóstico (Registrado), habilita el cierre y cierra el caso en solo lectura', async () => {
+  it('guarda el diagnóstico (Registrado): queda en solo lectura y solo se puede cerrar (D-22)', async () => {
     const { user } = await renderApp(TECNICO, '/casos/0241')
     await user.click(await screen.findByRole('radio', { name: /Confirmado/ }))
     expect(
@@ -51,12 +54,16 @@ describe('Diagnóstico técnico y cierre', () => {
 
     expect(await screen.findByText('Diagnóstico guardado')).toBeInTheDocument()
     expect(screen.getByText('Caso #0241 · ya puedes cerrar el caso.')).toBeInTheDocument()
-    expect(await screen.findByText('Confirmado: Botrytis')).toBeInTheDocument()
-    expect(screen.getByText('Registrado', { selector: 'span' })).toBeInTheDocument()
-    const cerrar = screen.getByRole('button', { name: /Cerrar caso/ })
-    await waitFor(() => expect(cerrar).toBeEnabled())
     expect(
-      screen.getByText('Al cerrar, se fija la fecha de vencimiento de conservación en 6 meses.'),
+      await screen.findByRole('heading', { name: 'Diagnóstico técnico registrado' }),
+    ).toBeInTheDocument()
+    expect(within(panel()).getByText('Confirmado: Botrytis')).toBeInTheDocument()
+    expect(screen.queryByRole('radio')).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Guardar diagnóstico' })).toBeNull()
+    const cerrar = within(panel()).getByRole('button', { name: /Cerrar caso/ })
+    expect(cerrar).toBeEnabled()
+    expect(
+      screen.getByText(/El diagnóstico registrado ya no se edita\. Al cerrar, se fija/),
     ).toBeInTheDocument()
 
     await user.click(cerrar)
@@ -70,16 +77,52 @@ describe('Diagnóstico técnico y cierre', () => {
     expect(screen.queryByText(/reabrir/i)).not.toBeInTheDocument()
   })
 
-  it('con cambios sin guardar pide guardar antes de cerrar (#0230 Registrado)', async () => {
-    const { user } = await renderApp(TECNICO, '/casos/0230')
-    const cerrar = await screen.findByRole('button', { name: /Cerrar caso/ })
-    expect(cerrar).toBeEnabled()
-    expect(screen.getByRole('radio', { name: /Confirmado/ })).toBeChecked()
-    await user.type(screen.getByLabelText('Observaciones y recomendación'), ' Volver en 15 días.')
-    expect(cerrar).toBeDisabled()
+  it('D-22: el técnico ve su caso Registrado en solo lectura y solo puede cerrarlo (#0230)', async () => {
+    await renderApp(TECNICO, '/casos/0230')
     expect(
-      screen.getByText('Guarda los cambios del diagnóstico antes de cerrar el caso.'),
+      await screen.findByRole('heading', { name: 'Diagnóstico técnico registrado' }),
     ).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Registrar diagnóstico técnico' })).toBeNull()
+    expect(screen.queryByRole('radio')).toBeNull()
+    expect(screen.queryByRole('textbox')).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Guardar diagnóstico' })).toBeNull()
+    expect(within(panel()).getByRole('button', { name: /Cerrar caso/ })).toBeEnabled()
+  })
+
+  it('D-22: el líder no puede reasignar un caso Registrado (#0230)', async () => {
+    await renderApp(LIDER, '/casos/0230')
+    await screen.findByRole('heading', { name: 'Diagnóstico técnico registrado' })
+    expect(screen.queryByRole('button', { name: /Reasignar técnico/ })).toBeNull()
+    expect(within(panel()).getByRole('button', { name: /Cerrar caso/ })).toBeEnabled()
+  })
+
+  it('D-22: la API responde 409 al volver a guardar el diagnóstico o reasignar en Registrado', async () => {
+    const llamar = async (metodo: string, ruta: string, cuerpo: unknown) => {
+      const r = await fetch(`/api/v1${ruta}`, {
+        method: metodo,
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${await adaptadorSimulado.obtenerToken()}`,
+        },
+        body: JSON.stringify(cuerpo),
+      })
+      return { status: r.status, cuerpo: (await r.json()) as { error: { codigo: string } } }
+    }
+
+    await renderApp(TECNICO, '/casos/0230')
+    await screen.findByRole('heading', { name: 'Diagnóstico técnico registrado' })
+    const diag = await llamar('POST', '/casos/0230/diagnostico', {
+      resultado_tecnico: 'NO_IDENTIFICADO',
+    })
+    expect(diag.status).toBe(409)
+    expect(diag.cuerpo.error.codigo).toBe('TRANSICION_INVALIDA')
+    cleanup()
+
+    await renderApp(LIDER, '/casos/0230')
+    await screen.findByRole('heading', { name: 'Diagnóstico técnico registrado' })
+    const asig = await llamar('PATCH', '/casos/0230/asignacion', { tecnico_id: 'u-jhon' })
+    expect(asig.status).toBe(409)
+    expect(asig.cuerpo.error.codigo).toBe('TRANSICION_INVALIDA')
   })
 
   it('identificación ambigua: no ofrece «Confirmado» y permite cualquier categoría (P-04)', async () => {

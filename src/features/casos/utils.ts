@@ -8,6 +8,12 @@ import type { CasoResumen, Evidencia, FiltrosCasos } from './types'
 /** Estados en los que un caso todavía se atiende (admite técnico). */
 export const ESTADOS_ACTIVOS: EstadoCaso[] = ['PENDIENTE_REVISION', 'EN_REVISION', 'REGISTRADO']
 
+/**
+ * Estados en los que el líder asigna o reasigna el técnico (igual que el backend). Un caso
+ * Registrado ya no se reasigna: solo pasa a Cerrado (D-22). En el detalle manda `puede_asignar`.
+ */
+export const ESTADOS_ASIGNABLES: EstadoCaso[] = ['PENDIENTE_REVISION', 'EN_REVISION']
+
 /** «Ana Lucía Becerra» → «Ana Becerra». */
 export function nombreCorto(nombre: string) {
   const partes = nombre.split(/\s+/).filter(Boolean)

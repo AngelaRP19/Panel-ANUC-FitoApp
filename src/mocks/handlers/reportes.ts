@@ -1291,8 +1291,7 @@ function resumen(f: FiltrosReporte): ResumenReportes {
       'Alertas generadas, decisiones del líder técnico, tiempos de respuesta y productores avisados.',
     productores:
       'Productores activos, fincas y cultivos por especie, productores con más casos y uso del chatbot.',
-    tecnicos:
-      'Casos asignados, pendientes y cerrados por técnico, y tiempos de revisión.',
+    tecnicos: 'Casos asignados, pendientes y cerrados por técnico, y tiempos de revisión.',
   }
   return {
     subtitulo: `Resumen de casos, categorías fitosanitarias y carga de trabajo · ${textoRango(f, l)}`,

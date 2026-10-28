@@ -83,8 +83,8 @@ export function CorreccionAlerta({ alerta }: { alerta: Alerta }) {
               </Aviso>
             )}
             <Aviso tono="info">
-              Usa esta opción solo si la alerta se envió por error. La corrección llega a los
-              mismos productores que recibieron la alerta y se puede enviar una sola vez.
+              Usa esta opción solo si la alerta se envió por error. La corrección llega a los mismos
+              productores que recibieron la alerta y se puede enviar una sola vez.
             </Aviso>
             <div>
               <div className="mb-1.5 etiqueta">Plantilla fija de corrección</div>
@@ -140,8 +140,8 @@ export function CorreccionAlerta({ alerta }: { alerta: Alerta }) {
             </div>
 
             <Aviso tono="adv">
-              La explicación no debe incluir productos, dosis ni tratamientos: solo la aclaración
-              y la invitación a escribir por el chat (RQF45).
+              La explicación no debe incluir productos, dosis ni tratamientos: solo la aclaración y
+              la invitación a escribir por el chat (RQF45).
             </Aviso>
           </div>
         </section>

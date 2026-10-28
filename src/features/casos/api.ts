@@ -102,7 +102,10 @@ export async function obtenerExplicacion(id: string): Promise<Explicacion> {
   return data
 }
 
-/** Guarda el diagnóstico técnico: el caso pasa a Registrado (se puede volver a guardar). */
+/**
+ * Guarda el diagnóstico técnico (solo En revisión): el caso pasa a Registrado. Se guarda una sola
+ * vez; un caso Registrado solo pasa a Cerrado (D-22) y volver a guardar responde 409.
+ */
 export async function registrarDiagnostico(
   id: string,
   datos: DatosDiagnostico,
