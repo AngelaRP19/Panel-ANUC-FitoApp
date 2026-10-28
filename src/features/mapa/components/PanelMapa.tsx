@@ -12,7 +12,7 @@ import type { Categoria, Vereda } from '@/types/enums'
 import { cn } from '@/utils/cn'
 import { formatearFecha, formatearFechaCorta, formatearHora } from '@/utils/fechas'
 import type { CasoMapa } from '../api'
-import { NIVEL_CONCENTRACION } from '../utils'
+import { NIVEL_CONCENTRACION, numeroCaso } from '../utils'
 
 const CALOR = ['', 'bg-calor-1 border border-borde', 'bg-calor-2', 'bg-calor-3', 'bg-calor-4']
 
@@ -127,7 +127,7 @@ export function TablaCasosMapa({
           onClick={(e) => e.stopPropagation()}
           className="codigo font-semibold text-verde-700"
         >
-          #{c.codigo}
+          {numeroCaso(c)}
         </Link>
       ),
     },
@@ -148,7 +148,9 @@ export function TablaCasosMapa({
       render: (c) => (
         <>
           {c.finca_nombre}{' '}
-          <span className="text-nota text-tinta-terciaria">· {VEREDA_LABEL[c.vereda]}</span>
+          <span className="text-nota text-tinta-terciaria">
+            · {VEREDA_LABEL[c.vereda] ?? c.vereda}
+          </span>
         </>
       ),
     },
@@ -185,7 +187,7 @@ export function TablaCasosMapa({
       selectedKey={seleccionado}
       onRowOpen={onAbrir}
       rowLabel={(c) =>
-        `Caso #${c.codigo}, ${CATEGORIA_LABEL[c.categoria]}, ${c.finca_nombre}. Ubicar en el mapa`
+        `Caso ${numeroCaso(c)}, ${CATEGORIA_LABEL[c.categoria]}, ${c.finca_nombre}. Ubicar en el mapa`
       }
       empty={
         <p className="px-6 py-8 text-center text-cuerpo-sm text-tinta-terciaria">

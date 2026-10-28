@@ -17,11 +17,17 @@ describe('Mapa de vigilancia (pantalla 19)', () => {
         /casos confirmados · .* · Zetaquirá, Boyacá · solo casos con resultado técnico Confirmado u Otra patología/,
       ),
     ).toBeInTheDocument()
-    // Sin clave de Google Maps: aviso, mapa embebido y la tabla con los casos.
-    expect(screen.getByText('Los casos se muestran en la tabla.')).toBeInTheDocument()
-    expect(screen.getByRole('img', { name: 'Mapa de Zetaquirá' })).toBeInTheDocument()
+    // Mapa interactivo de OpenStreetMap (sin clave) y la tabla con los casos.
+    expect(
+      screen.getByRole('region', { name: /Mapa de casos confirmados en Zetaquirá/ }),
+    ).toBeInTheDocument()
+    expect(screen.queryByText('Los casos se muestran en la tabla.')).not.toBeInTheDocument()
 
     await waitFor(() => expect(filas().length).toBeGreaterThan(0))
+    // Un marcador por caso, con la forma de su categoría en el nombre.
+    expect(
+      screen.getByRole('button', { name: /Trips \(triángulo\) · caso #0229/ }),
+    ).toBeInTheDocument()
     expect(codigos()).toContain('#0229') // Trips confirmado
     expect(codigos()).not.toContain('#0241') // en revisión, sin diagnóstico
     expect(codigos()).not.toContain('#0226') // no identificado

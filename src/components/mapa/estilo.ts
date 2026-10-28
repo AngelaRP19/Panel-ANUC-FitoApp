@@ -95,17 +95,22 @@ const FORMAS: Record<string, { color: [string, string]; forma: string }> = {
   },
 }
 
-/** Marcador de un caso con la forma y el color de su categoría (nunca solo color). */
-export function iconoCategoria(categoria: string): google.maps.Icon {
+/** Forma y color de la categoría (26 × 26), sin el `<svg>` que la envuelve. */
+function formaCategoria(categoria: string): string {
   const f = FORMAS[categoria] ?? FORMAS.BOTRYTIS!
   const color = colorToken(...f.color)
   const blanco = colorToken('blanco', '#ffffff')
+  return `<g fill="${color}" stroke="${blanco}" stroke-width="2.5" stroke-linejoin="round">${f.forma}</g>`
+}
+
+/** SVG de la forma de la categoría, para marcadores HTML (Leaflet). */
+export const svgCategoria = (categoria: string) =>
+  `<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">${formaCategoria(categoria)}</svg>`
+
+/** Marcador de un caso con la forma y el color de su categoría (nunca solo color). */
+export function iconoCategoria(categoria: string): google.maps.Icon {
   return {
-    url: svg(
-      `<g fill="${color}" stroke="${blanco}" stroke-width="2.5" stroke-linejoin="round">${f.forma}</g>`,
-      26,
-      26,
-    ),
+    url: svg(formaCategoria(categoria), 26, 26),
     scaledSize: new google.maps.Size(26, 26),
     anchor: new google.maps.Point(13, 13),
     labelOrigin: new google.maps.Point(13, -9),

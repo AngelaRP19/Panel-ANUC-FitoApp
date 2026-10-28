@@ -29,12 +29,16 @@ export const NIVEL_CONCENTRACION: Record<number, string> = {
 export const leerOcultas = (texto: string) =>
   new Set(texto.split(',').filter(Boolean) as Categoria[])
 
+/** «#0229»: la API ya trae el «#» en `codigo` (la simulación no); nunca se repite. */
+export const numeroCaso = (c: Pick<CasoMapa, 'codigo'>) =>
+  c.codigo.startsWith('#') ? c.codigo : `#${c.codigo}`
+
 /** «Trips (triángulo) · caso #0229 · Los Naranjos · 22 sep 2026» (nombre del marcador). */
 export function etiquetaCaso(c: CasoMapa) {
-  return `${CATEGORIA_LABEL[c.categoria]} (${CATEGORIA_FORMA_LABEL[c.categoria]}) · caso #${c.codigo} · ${c.finca_nombre} · ${formatearFecha(c.fecha)}`
+  return `${CATEGORIA_LABEL[c.categoria]} (${CATEGORIA_FORMA_LABEL[c.categoria]}) · caso ${numeroCaso(c)} · ${c.finca_nombre} · ${formatearFecha(c.fecha)}`
 }
 
 /** «Juracambita · 22 sep 2026 · 5.2523, -73.1788» */
 export function lugarCaso(c: CasoMapa) {
-  return `${VEREDA_LABEL[c.vereda]} · ${formatearFecha(c.fecha)} · ${formatearCoordenadas(c.latitud, c.longitud)}`
+  return `${VEREDA_LABEL[c.vereda] ?? c.vereda} · ${formatearFecha(c.fecha)} · ${formatearCoordenadas(c.latitud, c.longitud)}`
 }
