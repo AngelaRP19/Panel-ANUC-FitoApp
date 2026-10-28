@@ -150,13 +150,13 @@ describe('Alertas epidemiológicas', () => {
     const { user } = await renderApp(TECNICO, '/alertas')
     expect(
       await screen.findByText(
-        'Consulta de las alertas de la asociación. Te llegan como notificación si lo activas en tu cuenta.',
+        'Consulta de las alertas de la asociación. Las que sigues te llegan como notificación.',
       ),
     ).toBeInTheDocument()
     expect(screen.getByRole('note')).toHaveTextContent('Solo consulta.')
     expect(
-      screen.getByRole('link', { name: 'Configurar notificaciones de alertas' }),
-    ).toHaveAttribute('href', '/mi-cuenta')
+      screen.queryByRole('link', { name: 'Configurar notificaciones de alertas' }),
+    ).not.toBeInTheDocument()
 
     const d = await screen.findByRole('region', {
       name: 'Posible concentración de Trips en Juracambita',

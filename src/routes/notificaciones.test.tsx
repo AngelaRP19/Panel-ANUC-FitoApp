@@ -19,10 +19,8 @@ describe('Notificaciones de la campana (pantalla 18)', () => {
     expect(avisos[2]).toHaveTextContent('Caso en revisión')
     expect(avisos[2]).not.toHaveAccessibleName(/\(nueva\)/)
     expect(avisos[3]).toHaveTextContent('Casos próximos a vencer')
-    expect(within(panel).getByRole('link', { name: 'Configurar notificaciones' })).toHaveAttribute(
-      'href',
-      '/mi-cuenta',
-    )
+    // Sin preferencias de notificaciones (D-16).
+    expect(within(panel).queryByRole('link', { name: 'Configurar notificaciones' })).toBeNull()
     expect(within(panel).getByText('Últimos 7 días')).toBeInTheDocument()
 
     await user.click(within(panel).getByRole('button', { name: 'Marcar como leídas' }))

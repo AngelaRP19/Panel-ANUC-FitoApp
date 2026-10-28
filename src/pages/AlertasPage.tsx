@@ -1,7 +1,6 @@
-import { Link, useLocation, useParams } from 'react-router'
+import { useLocation, useParams } from 'react-router'
 import { BellRing, Info, SearchX } from 'lucide-react'
 import { PageHeader } from '@/components/layout/PageHeader'
-import { buttonClass } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { ErrorState } from '@/components/ui/ErrorState'
@@ -44,7 +43,7 @@ export default function AlertasPage() {
         description={
           esLider
             ? 'Posibles concentraciones de casos confirmados de Trips. El sistema las detecta; el líder técnico decide si se confirman.'
-            : 'Consulta de las alertas de la asociación. Te llegan como notificación si lo activas en tu cuenta.'
+            : 'Consulta de las alertas de la asociación. Las que sigues te llegan como notificación.'
         }
       />
 
@@ -58,9 +57,6 @@ export default function AlertasPage() {
             <b className="font-semibold">Solo consulta.</b> Puedes ver las alertas y sus casos, pero
             confirmarlas, descartarlas o comunicarlas le corresponde al líder técnico.
           </p>
-          <Link to={PATHS.miCuenta} className={buttonClass('secondary', 'sm')}>
-            Configurar notificaciones de alertas
-          </Link>
         </div>
       )}
 

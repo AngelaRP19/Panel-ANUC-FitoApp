@@ -3,12 +3,12 @@ import { Button } from '@/components/ui/Button'
 import { RolBadge } from '@/components/ui/RolBadge'
 import { useAuth } from '@/context/AuthContext'
 import { useLogout } from '@/features/auth'
-import { CambiarContrasenaForm, DatosPersonalesForm, NotificacionesForm } from '@/features/cuenta'
+import { CambiarContrasenaForm, DatosPersonalesForm } from '@/features/cuenta'
 import { iniciales } from '@/utils/texto'
 
 /**
- * Mi cuenta (diseño 11 líder · 12f técnico · RQF04): datos personales, cambio de contraseña
- * y preferencias de notificación. Cada usuario edita solo su cuenta; el rol no se cambia aquí.
+ * Mi cuenta (diseño 11 líder · 12f técnico · RQF04): datos personales y cambio de contraseña.
+ * Cada usuario edita solo su cuenta; el rol no se cambia aquí.
  */
 export default function MiCuentaPage() {
   const { usuario } = useAuth()
@@ -37,7 +37,6 @@ export default function MiCuentaPage() {
       <div className="grid items-start gap-5 lg:grid-cols-12">
         <DatosPersonalesForm usuario={usuario} />
         <CambiarContrasenaForm />
-        <NotificacionesForm />
       </div>
     </>
   )
