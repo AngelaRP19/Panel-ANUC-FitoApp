@@ -6,8 +6,8 @@ import type { CasoDetalle } from '../types'
 
 /**
  * «Diagnóstico técnico registrado» (artboard 04c): solo lectura, sin botones de edición ni de
- * reapertura. Se usa en el caso cerrado y, para el líder (que no diagnostica, D-02), en el caso
- * Registrado; `children` agrega la acción de cerrar cuando corresponde.
+ * reapertura. Se usa en el caso Cerrado y en el Registrado (para todos: D-22, el diagnóstico ya no
+ * se edita); `children` agrega la acción de cerrar cuando corresponde.
  */
 export function ResumenDiagnostico({
   caso,

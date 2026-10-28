@@ -4,7 +4,6 @@ import { useUrlFilters } from '@/hooks/useUrlFilters'
 import {
   asignarTecnico,
   cerrarCaso,
-  extenderConservacion,
   registrarDiagnostico,
   contarCasos,
   listarCasos,
@@ -156,13 +155,4 @@ export function useRegistrarDiagnostico(id: string) {
 export function useCerrarCaso(id: string) {
   const alCambiar = useAlCambiarCaso()
   return useMutation({ mutationFn: () => cerrarCaso(id), onSuccess: alCambiar })
-}
-
-export function useExtenderConservacion(id: string) {
-  const alCambiar = useAlCambiarCaso()
-  return useMutation({
-    mutationFn: ({ venceEn, justificacion }: { venceEn: string; justificacion: string }) =>
-      extenderConservacion(id, venceEn, justificacion),
-    onSuccess: alCambiar,
-  })
 }

@@ -3,6 +3,7 @@
 //            POST /alertas/{id}/descartar { justificacion } · POST|DELETE /alertas/{id}/seguir
 //            GET /alertas/{id}/destinatarios · PUT /alertas/{id}/borrador
 //            POST /alertas/{id}/comunicar { mensaje, veredas[] }
+//            POST /alertas/{id}/corregir { mensaje }
 //            GET /alertas/parametros · PUT /alertas/parametros/{categoria}
 import { api } from '@/services/apiClient'
 import type {
@@ -69,6 +70,15 @@ export async function guardarBorradorMensaje(id: string, b: BorradorMensaje): Pr
 /** Envía el mensaje por WhatsApp; la alerta pasa a Comunicada. */
 export async function comunicarAlerta(id: string, b: BorradorMensaje): Promise<Alerta> {
   const { data } = await api.post<Alerta>(`${ruta(id)}/comunicar`, b)
+  return data
+}
+
+/**
+ * Solo líder y una sola vez (D-17): envía la corrección (plantilla fija + explicación) a los
+ * mismos productores que recibieron la alerta. La alerta pasa a Corregida; un segundo intento → 409.
+ */
+export async function corregirAlerta(id: string, mensaje: string): Promise<Alerta> {
+  const { data } = await api.post<Alerta>(`${ruta(id)}/corregir`, { mensaje })
   return data
 }
 

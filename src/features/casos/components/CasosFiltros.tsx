@@ -33,7 +33,6 @@ const COINCIDENCIA = [
 const VENCIMIENTO = [
   { value: '15', label: 'Vence en 15 días o menos' },
   { value: '30', label: 'Vence en 30 días o menos' },
-  { value: 'extendida', label: 'Extendida' },
 ]
 const CATEGORIAS = [
   ...Object.entries(CATEGORIA_LABEL).map(([value, label]) => ({ value, label })),

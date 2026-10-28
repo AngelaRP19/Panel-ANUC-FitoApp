@@ -12,7 +12,7 @@ import { formatearPorcentaje } from '@/utils/numeros'
 import { formatearTelefono } from '@/utils/telefono'
 import type { CasoResumen } from '../types'
 import { AsignarTecnicoPanel } from './AsignarTecnicoPanel'
-import { ESTADOS_ACTIVOS } from '../utils'
+import { ESTADOS_ACTIVOS, ESTADOS_ASIGNABLES } from '../utils'
 import { Preliminar } from './CasosTable'
 
 function Dato({
@@ -84,7 +84,7 @@ export function ResumenCasoModal({ caso, esLider, onClose }: ResumenCasoModalPro
       footer={
         <div className="flex w-full flex-wrap items-center justify-between gap-2">
           <div>
-            {esLider && activo && !asignando && (
+            {esLider && ESTADOS_ASIGNABLES.includes(caso.estado) && !asignando && (
               <Button variant="secondary" onClick={() => setAsignando(true)}>
                 <UserPlus aria-hidden="true" />
                 {caso.tecnico ? 'Reasignar técnico' : 'Asignar técnico'}

@@ -1,13 +1,16 @@
+import type { ReactNode } from 'react'
 import { formatearHora } from '@/utils/fechas'
-import { PLANTILLA_MENSAJE } from '../utils'
 
-interface VistaPreviaWhatsAppProps {
-  categoria: string
-  recomendacion: string
+/** Hueco de la plantilla que aún no tiene texto: «[mensaje]». */
+export function HuecoPlantilla({ children }: { children: ReactNode }) {
+  return <span className="text-tinta-terciaria">{children}</span>
 }
 
-/** «Vista previa en WhatsApp» (pf-wa): burbuja del chatbot con la plantilla y la hora. */
-export function VistaPreviaWhatsApp({ categoria, recomendacion }: VistaPreviaWhatsAppProps) {
+/**
+ * «Vista previa en WhatsApp» (pf-wa): burbuja del chatbot con el texto y la hora. El contenido
+ * lo arma cada pantalla (mensaje de la alerta o corrección).
+ */
+export function VistaPreviaWhatsApp({ children }: { children: ReactNode }) {
   const hora = formatearHora(new Date().toISOString())
   return (
     <section
@@ -31,15 +34,7 @@ export function VistaPreviaWhatsApp({ categoria, recomendacion }: VistaPreviaWha
           </div>
         </div>
         <div className="max-w-[92%] self-start rounded-[4px_12px_12px_12px] bg-blanco px-3 py-2.5 text-cuerpo-sm break-words whitespace-pre-line shadow-1">
-          <b className="font-bold">{PLANTILLA_MENSAJE.inicio}</b>
-          {PLANTILLA_MENSAJE.antesCategoria}
-          <b className="font-bold">{categoria}</b>
-          {PLANTILLA_MENSAJE.antesMensaje}
-          {recomendacion.trim() ? (
-            recomendacion
-          ) : (
-            <span className="text-tinta-terciaria">[mensaje]</span>
-          )}
+          {children}
           <div className="mt-1 text-right text-[11px] text-tinta-terciaria tabular-nums">
             {hora}
           </div>

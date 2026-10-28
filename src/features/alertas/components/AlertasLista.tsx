@@ -1,5 +1,5 @@
 import { Link } from 'react-router'
-import { Ban, Megaphone, TriangleAlert, type LucideIcon } from 'lucide-react'
+import { Ban, Megaphone, TriangleAlert, Undo2, type LucideIcon } from 'lucide-react'
 import { EstadoAlertaBadge } from '@/components/ui/EstadoBadge'
 import { Skeleton } from '@/components/ui/Skeleton'
 import type { EstadoAlerta } from '@/types/enums'
@@ -14,6 +14,7 @@ const ICONO: Record<EstadoAlerta, { icono: LucideIcon; clase: string }> = {
   CONFIRMADA: { icono: TriangleAlert, clase: 'bg-peligro-suave text-peligro' },
   COMUNICADA: { icono: Megaphone, clase: 'bg-verde-100 text-verde-700' },
   DESCARTADA: { icono: Ban, clase: 'bg-inactivo-suave text-inactivo' },
+  CORREGIDA: { icono: Undo2, clase: 'bg-info-suave text-info' },
 }
 
 interface AlertasListaProps {

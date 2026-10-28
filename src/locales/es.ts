@@ -51,6 +51,7 @@ export const ESTADO_ALERTA_LABEL: Record<EstadoAlerta, string> = {
   CONFIRMADA: 'Confirmada',
   COMUNICADA: 'Comunicada',
   DESCARTADA: 'Descartada',
+  CORREGIDA: 'Corregida',
 }
 
 export const ESTADO_CUENTA_LABEL = { activo: 'Activo', inactivo: 'Deshabilitado' } as const

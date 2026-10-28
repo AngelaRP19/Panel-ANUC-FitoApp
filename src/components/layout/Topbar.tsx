@@ -115,10 +115,7 @@ export function Topbar({
                 No hay notificaciones.
               </p>
             )}
-            <div className="flex justify-between border-t border-borde px-4 py-2.5 text-cuerpo-sm">
-              <Link to={PATHS.miCuenta} className="enlace">
-                Configurar notificaciones
-              </Link>
+            <div className="flex justify-end border-t border-borde px-4 py-2.5 text-cuerpo-sm">
               <span className="text-tinta-terciaria">Últimos 7 días</span>
             </div>
           </Popover.Content>

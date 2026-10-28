@@ -102,7 +102,10 @@ export async function obtenerExplicacion(id: string): Promise<Explicacion> {
   return data
 }
 
-/** Guarda el diagnóstico técnico: el caso pasa a Registrado (se puede volver a guardar). */
+/**
+ * Guarda el diagnóstico técnico (solo En revisión): el caso pasa a Registrado. Se guarda una sola
+ * vez; un caso Registrado solo pasa a Cerrado (D-22) y volver a guardar responde 409.
+ */
 export async function registrarDiagnostico(
   id: string,
   datos: DatosDiagnostico,
@@ -114,18 +117,5 @@ export async function registrarDiagnostico(
 /** Cierra el caso: pasa a Cerrado y fija el vencimiento de conservación en 6 meses. */
 export async function cerrarCaso(id: string): Promise<CasoDetalle> {
   const { data } = await api.post<CasoDetalle>(ruta(id, '/cierre'))
-  return data
-}
-
-/** Extiende la conservación de un caso cerrado (pantalla 22). `venceEn`: «aaaa-mm-dd». */
-export async function extenderConservacion(
-  id: string,
-  venceEn: string,
-  justificacion: string,
-): Promise<CasoDetalle> {
-  const { data } = await api.post<CasoDetalle>(ruta(id, '/conservacion'), {
-    vence_en: venceEn,
-    justificacion,
-  })
   return data
 }

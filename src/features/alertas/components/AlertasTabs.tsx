@@ -9,6 +9,7 @@ const ESTADOS: EstadoAlerta[] = [
   'EN_REVISION',
   'CONFIRMADA',
   'COMUNICADA',
+  'CORREGIDA',
   'DESCARTADA',
 ]
 
@@ -19,6 +20,7 @@ const PUNTO: Record<EstadoAlerta, string> = {
   CONFIRMADA: 'bg-peligro',
   COMUNICADA: 'bg-verde-700',
   DESCARTADA: 'bg-inactivo',
+  CORREGIDA: 'bg-info',
 }
 
 interface AlertasTabsProps {

@@ -955,7 +955,6 @@ function reporteTecnicos(f: FiltrosReporte): ReporteDatos {
     if (f.dias_desde && !(d >= Number(f.dias_desde.replace(',', '.')))) return false
     if (f.dias_hasta && !(d <= Number(f.dias_hasta.replace(',', '.')))) return false
     if (f.con_pendientes && !de(u.id).some((c) => c.estado === 'EN_REVISION')) return false
-    if (f.con_extensiones && !de(u.id).some((c) => c.conservacion_extendida)) return false
     return true
   })
   const enviados = casosPeriodo.filter((c) => c.enviado_a_panel_en)
@@ -963,7 +962,6 @@ function reporteTecnicos(f: FiltrosReporte): ReporteDatos {
   const sinTecnico = casosPeriodo.filter((c) => c.estado === 'PENDIENTE_REVISION')
   const registrados = casosPeriodo.filter((c) => c.estado === 'REGISTRADO')
   const susCasos = casosPeriodo.filter((c) => l.some((u) => u.id === c.tecnico?.id))
-  const extensiones = susCasos.filter((c) => c.conservacion_extendida)
   const conCasos = l.filter((u) => de(u.id).length > 0)
   const rol = (r: string) => (r === 'LIDER_TECNICO' ? 'Líder técnico' : 'Técnico')
   const desglose = (id: string) =>
@@ -1059,13 +1057,6 @@ function reporteTecnicos(f: FiltrosReporte): ReporteDatos {
             etiqueta: 'Casos cerrados',
             valor: susCasos.filter((c) => c.estado === 'CERRADO').length,
           },
-          {
-            etiqueta: 'Extensiones de conservación',
-            valor: extensiones.length,
-            texto: extensiones.length
-              ? `${extensiones.length} · ${extensiones.map((c) => `#${c.codigo}`).join(', ')}`
-              : '0',
-          },
         ],
       },
       {
@@ -1080,7 +1071,6 @@ function reporteTecnicos(f: FiltrosReporte): ReporteDatos {
           { clave: 'revision', titulo: 'En revisión', alinear: 'derecha' },
           { clave: 'registrados', titulo: 'Registrados', alinear: 'derecha' },
           { clave: 'cerrados', titulo: 'Cerrados', alinear: 'derecha' },
-          { clave: 'extensiones', titulo: 'Extensiones', alinear: 'derecha' },
         ],
         filas: l.map((u) => ({
           tecnico: u.nombre,
@@ -1089,7 +1079,6 @@ function reporteTecnicos(f: FiltrosReporte): ReporteDatos {
           revision: de(u.id).filter((c) => c.estado === 'EN_REVISION').length,
           registrados: de(u.id).filter((c) => c.estado === 'REGISTRADO').length,
           cerrados: de(u.id).filter((c) => c.estado === 'CERRADO').length,
-          extensiones: de(u.id).filter((c) => c.conservacion_extendida).length,
         })),
         porPagina: 10,
         sustantivo: 'cuentas',
@@ -1302,8 +1291,7 @@ function resumen(f: FiltrosReporte): ResumenReportes {
       'Alertas generadas, decisiones del líder técnico, tiempos de respuesta y productores avisados.',
     productores:
       'Productores activos, fincas y cultivos por especie, productores con más casos y uso del chatbot.',
-    tecnicos:
-      'Casos asignados, pendientes y cerrados por técnico, tiempos de revisión y extensiones de conservación.',
+    tecnicos: 'Casos asignados, pendientes y cerrados por técnico, y tiempos de revisión.',
   }
   return {
     subtitulo: `Resumen de casos, categorías fitosanitarias y carga de trabajo · ${textoRango(f, l)}`,
@@ -1364,7 +1352,7 @@ export const reportesHandlers = [
     return HttpResponse.json(consultas.map(conResultado))
   }),
 
-  // Guardar consulta (F5): nombre de 5 a 60 caracteres, reporte, visibilidad y envío.
+  // Guardar consulta (F5): nombre de 5 a 60 caracteres, reporte y visibilidad.
   http.post(`${API}/reportes/consultas`, async ({ request }) => {
     const u = usuarioActual(request)
     const bloqueo = soloLider(request)
@@ -1375,12 +1363,6 @@ export const reportesHandlers = [
     if (nombre.length < 5 || nombre.length > 60)
       campos.nombre = 'Escribe un nombre de 5 a 60 caracteres.'
     if (!esTipoReporte(b.tipo)) campos.tipo = 'Elige el reporte.'
-    if (b.envio && b.envio.frecuencia !== 'no') {
-      const correos = b.envio.correos ?? []
-      if (!correos.length || correos.some((c) => !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(c))) {
-        campos.correos = 'Escribe uno o más correos válidos separados por coma.'
-      }
-    }
     if (Object.keys(campos).length)
       return errorApi(422, 'VALIDACION', 'Revisa los campos marcados.', campos)
     const nueva: ConsultaFixture = {
@@ -1390,7 +1372,8 @@ export const reportesHandlers = [
       descripcion: b.descripcion?.trim() || REPORTES[b.tipo as TipoReporte].titulo,
       filtros: b.filtros ?? {},
       visibilidad: b.visibilidad === 'yo' ? 'yo' : 'equipo',
-      envio: b.envio && b.envio.frecuencia !== 'no' ? b.envio : null,
+      // Sin envío programado (D-21): se ignora `envio` si llega.
+      envio: null,
       creada_por: u!.nombre,
     }
     consultas.unshift(nueva)

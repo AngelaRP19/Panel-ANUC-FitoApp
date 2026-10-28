@@ -19,6 +19,7 @@ const TONO_ALERTA: Record<EstadoAlerta, BadgeTone> = {
   CONFIRMADA: 'danger',
   COMUNICADA: 'success',
   DESCARTADA: 'inactive',
+  CORREGIDA: 'info',
 }
 
 /** Estado del caso. Un valor desconocido de la API se muestra en tono neutro. */

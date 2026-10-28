@@ -154,14 +154,9 @@ describe('Reportes · resumen (pantalla 23)', () => {
     await user.click(within(modal).getByRole('button', { name: 'Guardar consulta' }))
     expect(within(modal).getByText('Escribe un nombre de 5 a 60 caracteres.')).toBeInTheDocument()
     await user.type(within(modal).getByLabelText(/Nombre de la consulta/), 'Casos de la semana')
-    await user.click(within(modal).getByRole('radio', { name: 'Cada semana' }))
-    await user.type(within(modal).getByLabelText(/Enviar a/), 'correo-malo')
-    await user.click(within(modal).getByRole('button', { name: 'Guardar consulta' }))
-    expect(
-      within(modal).getByText('Escribe uno o más correos válidos separados por coma.'),
-    ).toBeInTheDocument()
-    await user.clear(within(modal).getByLabelText(/Enviar a/))
-    await user.type(within(modal).getByLabelText(/Enviar a/), 'lider@anuc.org')
+    // Sin envío programado por correo (D-21).
+    expect(within(modal).queryByText('Envío programado')).toBeNull()
+    expect(within(modal).queryByLabelText(/Enviar a/)).toBeNull()
     await user.click(within(modal).getByRole('button', { name: 'Guardar consulta' }))
 
     expect(await screen.findByText('Consulta guardada')).toBeInTheDocument()

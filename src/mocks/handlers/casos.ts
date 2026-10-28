@@ -13,7 +13,8 @@ import { usuarios, type UsuarioFixture } from '../fixtures/usuarios'
 import { API, errorApi, noAutenticado, usuarioActual } from './comun'
 
 const MS_DIA = 86_400_000
-const ACTIVOS: EstadoCaso[] = ['PENDIENTE_REVISION', 'EN_REVISION', 'REGISTRADO']
+/** Igual que `ESTADOS_ASIGNABLES` del backend: un caso Registrado ya no se reasigna (D-22). */
+const ASIGNABLES: EstadoCaso[] = ['PENDIENTE_REVISION', 'EN_REVISION']
 
 const normalizar = (t: string) => t.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
 
@@ -34,9 +35,10 @@ function permisosDe(c: CasoFixture, u: UsuarioFixture) {
   const esLider = u.rol === 'LIDER_TECNICO'
   const asignado = c.tecnico?.id === u.id
   return {
-    puede_diagnosticar: !esLider && asignado && ['EN_REVISION', 'REGISTRADO'].includes(c.estado),
+    // D-22: solo En revisión. Un caso Registrado ya no se edita; solo pasa a Cerrado.
+    puede_diagnosticar: !esLider && asignado && c.estado === 'EN_REVISION',
     puede_cerrar: c.estado === 'REGISTRADO' && (esLider || asignado),
-    puede_asignar: esLider && ACTIVOS.includes(c.estado),
+    puede_asignar: esLider && ASIGNABLES.includes(c.estado),
   }
 }
 
@@ -82,7 +84,6 @@ function filtrar(lista: CasoFixture[], p: URLSearchParams): CasoFixture[] {
     if (min && (c.preliminar?.porcentaje ?? 0) < min) return false
 
     const venc = p.get('vencimiento')
-    if (venc === 'extendida' && !c.conservacion_extendida) return false
     if (venc === '15' || venc === '30') {
       if (!c.vence_en) return false
       const dias = (new Date(c.vence_en).getTime() - ahora) / MS_DIA
@@ -211,9 +212,16 @@ export const casosHandlers = [
     }
     const caso = visibles(u).find((c) => c.id === params.id)
     if (!caso) return errorApi(404, 'CASO_NO_ENCONTRADO', 'El caso no existe.')
-    const permitidos: EstadoCaso[] = ['EN_REVISION', 'REGISTRADO']
-    if (!permitidos.includes(caso.estado)) {
-      return errorApi(409, 'ESTADO_INVALIDO', 'Este caso ya no admite diagnóstico.')
+    // Mismas respuestas que el backend (D-22): el diagnóstico se guarda una sola vez.
+    if (caso.estado !== 'EN_REVISION') {
+      const yaTiene = caso.estado === 'REGISTRADO' || caso.estado === 'CERRADO'
+      return errorApi(
+        409,
+        'TRANSICION_INVALIDA',
+        yaTiene
+          ? 'Este caso ya tiene diagnóstico.'
+          : 'El caso debe estar En revisión para diagnosticarlo.',
+      )
     }
     const b = (await request.json()) as {
       resultado_tecnico?: ResultadoTecnico
@@ -271,51 +279,6 @@ export const casosHandlers = [
     return HttpResponse.json(detalleCon(caso, u))
   }),
 
-  // Extender la conservación de un caso cerrado (pantalla 22): líder o técnico en sus casos.
-  // Queda en el historial con el nombre, la fecha y la justificación.
-  http.post(`${API}/casos/:id/conservacion`, async ({ request, params }) => {
-    const u = usuarioActual(request)
-    if (!u) return noAutenticado()
-    const caso = visibles(u).find((c) => c.id === params.id)
-    if (!caso) return errorApi(404, 'CASO_NO_ENCONTRADO', 'El caso no existe.')
-    if (caso.estado !== 'CERRADO' || !caso.vence_en) {
-      return errorApi(
-        409,
-        'ESTADO_INVALIDO',
-        'Solo se extiende la conservación de un caso cerrado.',
-      )
-    }
-    const b = (await request.json()) as { vence_en?: string; justificacion?: string }
-    const campos: Record<string, string> = {}
-    const justificacion = b.justificacion?.trim() ?? ''
-    if (justificacion.length < 20) {
-      campos.justificacion = 'Escribe la justificación para extender la conservación.'
-    }
-    const nueva = /^\d{4}-\d{2}-\d{2}$/.test(b.vence_en ?? '')
-      ? new Date(`${b.vence_en}T23:59:00-05:00`)
-      : null
-    if (!nueva || Number.isNaN(nueva.getTime())) {
-      campos.vence_en = 'Escribe una fecha válida con el formato dd/mm/aaaa.'
-    } else if (nueva.getTime() <= new Date(caso.vence_en).getTime()) {
-      campos.vence_en = 'La nueva fecha debe ser posterior al vencimiento actual.'
-    }
-    if (Object.keys(campos).length) {
-      return errorApi(422, 'VALIDACION', 'Revisa los campos marcados.', campos)
-    }
-    caso.vence_en = nueva!.toISOString()
-    caso.conservacion_extendida = true
-    caso.extensiones = [
-      ...(caso.extensiones ?? []),
-      {
-        por: u.nombre,
-        en: new Date().toISOString(),
-        justificacion,
-        vence_en: caso.vence_en,
-      },
-    ]
-    return HttpResponse.json(detalleCon(caso, u))
-  }),
-
   // Asignar o reasignar el técnico (solo líder). Pendiente de revisión → En revisión.
   http.patch(`${API}/casos/:id/asignacion`, async ({ request, params }) => {
     const u = usuarioActual(request)
@@ -325,8 +288,8 @@ export const casosHandlers = [
     }
     const caso = casos.find((c) => c.id === params.id)
     if (!caso) return errorApi(404, 'CASO_NO_ENCONTRADO', 'El caso no existe.')
-    if (!ACTIVOS.includes(caso.estado)) {
-      return errorApi(409, 'ESTADO_INVALIDO', 'Este caso ya no admite asignación.')
+    if (!ASIGNABLES.includes(caso.estado)) {
+      return errorApi(409, 'TRANSICION_INVALIDA', 'El caso ya no admite asignación.')
     }
     const { tecnico_id } = (await request.json()) as { tecnico_id: string }
     // Solo cuentas de rol técnico (D-02): el rol líder no recibe casos.

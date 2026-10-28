@@ -146,17 +146,84 @@ describe('Alertas epidemiológicas', () => {
     expect(within(d).queryByRole('button', { name: 'Confirmar alerta' })).not.toBeInTheDocument()
   })
 
+  it('una alerta comunicada ofrece «Corregir alerta» al líder (D-17)', async () => {
+    await renderApp(LIDER, '/alertas/ALR-009')
+    const d = await screen.findByRole('region', {
+      name: 'Alerta fitosanitaria comunicada: Trips en Juracambita',
+    })
+    expect(within(d).getByRole('link', { name: 'Corregir alerta' })).toHaveAttribute(
+      'href',
+      '/alertas/ALR-009/correccion',
+    )
+  })
+
+  it('corrige una alerta comunicada una sola vez y muestra la corrección enviada', async () => {
+    const { user, router } = await renderApp(LIDER, '/alertas/ALR-009/correccion')
+    expect(await screen.findByRole('heading', { name: 'Corregir alerta' })).toBeInTheDocument()
+    expect(screen.getByText('Plantilla fija de corrección')).toBeInTheDocument()
+    expect(
+      screen.getByText('Los mismos 14 productores que recibieron la alerta'),
+    ).toBeInTheDocument()
+    const enviar = screen.getByRole('button', { name: 'Enviar corrección' })
+    expect(enviar).toBeDisabled()
+
+    const campo = screen.getByLabelText(/^Explicación/)
+    expect(campo).toHaveAttribute('maxlength', '300')
+    // El guardrail rechaza productos, dosis o tratamientos.
+    await user.type(campo, 'Aplique el producto indicado en la dosis de siempre.')
+    await user.click(enviar)
+    const dialogo = await screen.findByRole('alertdialog')
+    await user.click(within(dialogo).getByRole('button', { name: 'Enviar corrección' }))
+    expect(
+      await screen.findByText('El mensaje no puede recomendar productos, dosis ni tratamientos.'),
+    ).toBeInTheDocument()
+
+    await user.clear(campo)
+    await user.type(campo, 'Los casos de la zona no eran de Trips. Si tiene dudas, escríbanos.')
+    expect(screen.getByRole('region', { name: 'Vista previa en WhatsApp' })).toHaveTextContent(
+      'Los casos de la zona no eran de Trips.',
+    )
+    await user.click(screen.getByRole('button', { name: 'Enviar corrección' }))
+    await user.click(
+      within(await screen.findByRole('alertdialog')).getByRole('button', {
+        name: 'Enviar corrección',
+      }),
+    )
+    expect(await screen.findByText('Corrección enviada')).toBeInTheDocument()
+    await waitFor(() => expect(router.state.location.pathname).toBe('/alertas/ALR-009'))
+
+    const d = await screen.findByRole('region', {
+      name: 'Alerta fitosanitaria corregida: Trips en Juracambita',
+    })
+    const bloque = within(d).getByRole('region', { name: 'Corrección enviada' })
+    expect(bloque).toHaveTextContent('Corrección enviada por Wilmar Torres')
+    expect(bloque).toHaveTextContent('Los casos de la zona no eran de Trips.')
+    expect(within(d).queryByRole('link', { name: 'Corregir alerta' })).not.toBeInTheDocument()
+
+    // Una segunda corrección no es posible: la pantalla vuelve al detalle.
+    await router.navigate('/alertas/ALR-009/correccion')
+    await waitFor(() => expect(router.state.location.pathname).toBe('/alertas/ALR-009'))
+  })
+
+  it('el técnico no ve «Corregir alerta»', async () => {
+    await renderApp(TECNICO, '/alertas/ALR-009')
+    const d = await screen.findByRole('region', {
+      name: 'Alerta fitosanitaria comunicada: Trips en Juracambita',
+    })
+    expect(within(d).queryByRole('link', { name: 'Corregir alerta' })).not.toBeInTheDocument()
+  })
+
   it('el técnico solo consulta y puede pedir que le avisen', async () => {
     const { user } = await renderApp(TECNICO, '/alertas')
     expect(
       await screen.findByText(
-        'Consulta de las alertas de la asociación. Te llegan como notificación si lo activas en tu cuenta.',
+        'Consulta de las alertas de la asociación. Las que sigues te llegan como notificación.',
       ),
     ).toBeInTheDocument()
     expect(screen.getByRole('note')).toHaveTextContent('Solo consulta.')
     expect(
-      screen.getByRole('link', { name: 'Configurar notificaciones de alertas' }),
-    ).toHaveAttribute('href', '/mi-cuenta')
+      screen.queryByRole('link', { name: 'Configurar notificaciones de alertas' }),
+    ).not.toBeInTheDocument()
 
     const d = await screen.findByRole('region', {
       name: 'Posible concentración de Trips en Juracambita',

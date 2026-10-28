@@ -96,7 +96,6 @@ export interface ResumenReportes {
 }
 
 export type Visibilidad = 'yo' | 'equipo'
-export type Frecuencia = 'no' | 'semana' | 'mes'
 
 export interface ConsultaGuardada {
   id: string
@@ -107,7 +106,8 @@ export interface ConsultaGuardada {
   /** Resultado actual («6 casos»), recalculado al pedir la lista. */
   resultado: string
   visibilidad: Visibilidad
-  envio: { frecuencia: Frecuencia; dia_hora: string; formato: string; correos: string[] } | null
+  /** Sin envío programado por correo (D-21): siempre null. */
+  envio: null
   creada_por: string
 }
 
@@ -116,5 +116,5 @@ export interface DatosConsulta {
   tipo: TipoReporte
   filtros: FiltrosReporte
   visibilidad: Visibilidad
-  envio: ConsultaGuardada['envio']
+  envio: null
 }

@@ -364,26 +364,6 @@ export function historialDe(c: CasoFixture) {
       detalle: `${c.tecnico?.nombre ?? LIDER} · Vence conservación: ${vence}`,
       pendiente: false,
     })
-    if (c.extensiones?.length) {
-      // Extensiones hechas desde el panel (pantalla 22): quién, cuándo y por qué.
-      for (const e of c.extensiones) {
-        pasos.push({
-          tipo: 'EXTENSION',
-          titulo: 'Conservación extendida',
-          en: e.en,
-          detalle: `${e.por} · ${e.justificacion}`,
-          pendiente: false,
-        })
-      }
-    } else if (c.conservacion_extendida) {
-      pasos.push({
-        tipo: 'EXTENSION',
-        titulo: 'Conservación extendida',
-        en: mas(cierre, 30 * DIA),
-        detalle: `${LIDER} · El productor pidió segunda visita`,
-        pendiente: false,
-      })
-    }
   } else {
     pasos.push({
       tipo: 'CIERRE',

@@ -8,7 +8,27 @@ import { productores } from '../fixtures/productores'
 import { usuarios } from '../fixtures/usuarios'
 import { API, errorApi, noAutenticado, usuarioActual } from './comun'
 
-const ESTADOS = ['GENERADA', 'EN_REVISION', 'CONFIRMADA', 'COMUNICADA', 'DESCARTADA'] as const
+const ESTADOS = [
+  'GENERADA',
+  'EN_REVISION',
+  'CONFIRMADA',
+  'COMUNICADA',
+  'DESCARTADA',
+  'CORREGIDA',
+] as const
+
+/** Mismo texto y reglas del guardrail del backend (`app/core/guardrail.py`), resumidas. */
+const MENSAJE_BLOQUEADO = 'El mensaje no puede recomendar productos, dosis ni tratamientos.'
+const RECETA =
+  /\b(dosis|dosific\w*|dilu\w+|mezcl\w+|aplic\w+|fumig\w+|asperj\w+|roci\w+|insecticidas?|fungicidas?|pesticidas?|plaguicidas?|agroquimic\w+|veneno\w*|fertiliz\w+|abono\w*|tratamientos?|tratar\w*|productos?|remedios?|curar|cura)\b/
+const recetaTratamiento = (t: string) =>
+  RECETA.test(
+    t
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase(),
+  )
+
 /** Estados en los que el líder todavía decide (confirmar o descartar). */
 const ABIERTAS = ['GENERADA', 'EN_REVISION']
 
@@ -73,6 +93,7 @@ function detalle(a: AlertaFixture, usuarioId: string, esLider: boolean) {
     confirmada_en: a.confirmada_en,
     comunicada_en: a.comunicada_en,
     descarte: a.descarte,
+    correccion: a.correccion,
     borrador: a.borrador,
     siguiendo: a.seguidores.includes(usuarioId),
   }
@@ -292,6 +313,44 @@ export const alertasHandlers = [
     r.a.productores_notificados = total
     r.a.comunicada_en = new Date().toISOString()
     r.a.borrador = null
+    return HttpResponse.json(detalle(r.a, r.u.id, true))
+  }),
+
+  // Corregir una alerta comunicada por error (D-17): solo el líder, una sola vez, a los mismos
+  // productores que la recibieron. Plantilla fija + explicación; la alerta pasa a Corregida.
+  http.post(`${API}/alertas/:id/corregir`, async ({ request, params }) => {
+    const r = buscar(request, params.id)
+    if (r.error) return r.error
+    if (r.u.rol !== 'LIDER_TECNICO') {
+      return errorApi(403, 'SOLO_LIDER', 'Solo el líder técnico corrige alertas.')
+    }
+    if (r.a.estado === 'CORREGIDA') {
+      return errorApi(409, 'TRANSICION_INVALIDA', 'La alerta ya fue corregida.')
+    }
+    if (r.a.estado !== 'COMUNICADA') {
+      return errorApi(409, 'TRANSICION_INVALIDA', 'Solo se corrige una alerta que ya se comunicó.')
+    }
+    if (!r.a.productores_notificados) {
+      return errorApi(
+        409,
+        'TRANSICION_INVALIDA',
+        'Nadie recibió la alerta, no hay a quién enviar la corrección.',
+      )
+    }
+    const b = (await request.json()) as { mensaje?: string }
+    const mensaje = b.mensaje?.trim() ?? ''
+    let error = ''
+    if (!mensaje) error = 'Escribe la explicación de la corrección.'
+    else if (mensaje.length > 300) error = 'Máximo 300 caracteres.'
+    else if (recetaTratamiento(mensaje)) error = MENSAJE_BLOQUEADO
+    if (error) return errorApi(422, 'VALIDACION', 'Revisa los campos marcados.', { mensaje: error })
+    const lider = usuarios.find((x) => x.id === r.u.id)!
+    r.a.estado = 'CORREGIDA'
+    r.a.correccion = {
+      mensaje,
+      por: { id: lider.id, nombre: lider.nombre },
+      en: new Date().toISOString(),
+    }
     return HttpResponse.json(detalle(r.a, r.u.id, true))
   }),
 

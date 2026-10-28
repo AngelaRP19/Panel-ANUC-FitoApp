@@ -25,3 +25,4 @@ dist-ssr
 pruebas.md
 pendientes.md
 .claude
+.env.production

@@ -58,10 +58,20 @@ export interface Alerta extends AlertaResumen {
   confirmada_en: string | null
   comunicada_en: string | null
   descarte: { motivo: string; por: Persona; en: string } | null
+  /** Corrección enviada a quienes recibieron la alerta (D-17). Solo en Corregida. */
+  correccion: Correccion | null
   /** Mensaje a productores guardado como borrador (pantalla 12). */
   borrador: BorradorMensaje | null
   /** Quien consulta pidió «Avisarme cuando cambie». */
   siguiendo: boolean
+}
+
+/** Corrección de una alerta comunicada por error (D-17): plantilla fija + explicación. */
+export interface Correccion {
+  /** Explicación del líder (máx. 300 caracteres). */
+  mensaje: string
+  por: Persona | null
+  en: string | null
 }
 
 export type FiltrosAlertas = {

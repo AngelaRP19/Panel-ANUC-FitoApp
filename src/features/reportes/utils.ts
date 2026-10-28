@@ -122,6 +122,7 @@ const ESTADO_ALERTA: Record<string, string> = {
   CONFIRMADA: 'Confirmada',
   COMUNICADA: 'Comunicada',
   DESCARTADA: 'Descartada',
+  CORREGIDA: 'Corregida',
 }
 const RESULTADO: Record<string, string> = {
   CONFIRMADO: 'Confirmado',
@@ -219,7 +220,6 @@ const NOMBRES: Record<string, { nombre: string; valor?: (v: string) => string }>
   dias_desde: { nombre: 'Días de revisión desde' },
   dias_hasta: { nombre: 'Días de revisión hasta' },
   con_pendientes: { nombre: 'Con casos pendientes', valor: () => 'Sí' },
-  con_extensiones: { nombre: 'Con extensiones', valor: () => 'Sí' },
 }
 
 /** Claves que no son filtros quitables (el periodo se muestra aparte). */
@@ -275,15 +275,7 @@ export const CLAVES_PANEL: Record<PanelFiltros, string[]> = {
     'con_activos',
     'chatbot',
   ],
-  tecnicos: [
-    'tecnicos',
-    'rol',
-    'estado_cuenta',
-    'dias_desde',
-    'dias_hasta',
-    'con_pendientes',
-    'con_extensiones',
-  ],
+  tecnicos: ['tecnicos', 'rol', 'estado_cuenta', 'dias_desde', 'dias_hasta', 'con_pendientes'],
 }
 
 /** URL de un reporte con unos filtros (consultas guardadas, tarjetas del índice). */

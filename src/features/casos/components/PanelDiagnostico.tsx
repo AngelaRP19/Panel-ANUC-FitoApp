@@ -40,7 +40,10 @@ function SinDiagnostico({
   )
 }
 
-/** «Cerrar caso» para quien puede cerrar sin poder diagnosticar (el líder, con el caso Registrado). */
+/**
+ * «Cerrar caso» con el caso Registrado: la única acción que queda (D-22). La ven el técnico
+ * asignado y el líder (`puede_cerrar`).
+ */
 function CerrarCasoLectura({ caso }: { caso: CasoDetalle }) {
   const cerrar = useCerrarCaso(caso.id)
   return (
@@ -72,7 +75,8 @@ function CerrarCasoLectura({ caso }: { caso: CasoDetalle }) {
         Cerrar caso
       </Button>
       <p id="ayuda-cerrar" className="text-nota text-tinta-terciaria">
-        Al cerrar, se fija la fecha de vencimiento de conservación en 6 meses.
+        El diagnóstico registrado ya no se edita. Al cerrar, se fija la fecha de vencimiento de
+        conservación en 6 meses.
       </p>
     </div>
   )
@@ -86,9 +90,10 @@ interface PanelDiagnosticoProps {
 /**
  * Columna «Resultado técnico · decisión humana» del detalle. Se guía por los permisos que
  * calcula el servidor (`puede_diagnosticar`, `puede_cerrar`), no por el rol:
- * - Quien puede diagnosticar (el técnico asignado, En revisión o Registrado) ve el formulario.
- * - El resto (siempre el líder, D-02) ve el diagnóstico en solo lectura si existe, con
- *   «Cerrar caso» si le corresponde; si no existe, un aviso.
+ * - Quien puede diagnosticar (el técnico asignado, solo En revisión) ve el formulario.
+ * - Registrado (D-22): el diagnóstico en solo lectura y, si `puede_cerrar`, «Cerrar caso»
+ *   (técnico asignado o líder). No se vuelve a guardar ni se reasigna.
+ * - Sin diagnóstico y sin permiso (siempre el líder, D-02): un aviso.
  * Cerrado: solo lectura.
  */
 export function PanelDiagnostico({ caso, usuarioNombre }: PanelDiagnosticoProps) {

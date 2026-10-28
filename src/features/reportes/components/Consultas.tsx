@@ -15,21 +15,15 @@ import { MENSAJES } from '@/locales/es'
 import { esErrorApi } from '@/services/apiClient'
 import { cn } from '@/utils/cn'
 import { useConsultas, useEliminarConsulta, useExportarCsv, useGuardarConsulta } from '../hooks'
-import type {
-  ConsultaGuardada,
-  FiltrosReporte,
-  Frecuencia,
-  TipoReporte,
-  Visibilidad,
-} from '../types'
+import type { ConsultaGuardada, FiltrosReporte, TipoReporte, Visibilidad } from '../types'
 import { REPORTES, resumenFiltros, TIPOS_REPORTE, urlReporte } from '../utils'
 
 const RADIO =
   'flex min-h-8 cursor-pointer items-center gap-2.5 text-cuerpo-sm [&>input]:m-0 [&>input]:size-4.5 [&>input]:accent-verde-700'
 
 /**
- * «Guardar consulta» (artboard F5): nombre, reporte, filtros que se guardan, quién la ve y
- * envío programado por correo (día y hora, formato y destinatarios).
+ * «Guardar consulta» (artboard F5): nombre, reporte, filtros que se guardan y quién la ve.
+ * Sin envío programado por correo (D-21): `envio` va siempre en null.
  */
 export function GuardarConsultaModal({
   tipo,
@@ -44,25 +38,13 @@ export function GuardarConsultaModal({
   const [nombre, setNombre] = useState('')
   const [reporte, setReporte] = useState<TipoReporte>(tipo)
   const [visibilidad, setVisibilidad] = useState<Visibilidad>('yo')
-  const [frecuencia, setFrecuencia] = useState<Frecuencia>('no')
-  const [diaHora, setDiaHora] = useState('Lunes · 07:00')
-  const [formato, setFormato] = useState('PDF')
-  const [correos, setCorreos] = useState('')
   const [errores, setErrores] = useState<Record<string, string>>({})
-  const conEnvio = frecuencia !== 'no'
   const relativo = !filtros.desde
 
   const onGuardar = () => {
     const e: Record<string, string> = {}
     const n = nombre.trim()
     if (n.length < 5 || n.length > 60) e.nombre = 'Escribe un nombre de 5 a 60 caracteres.'
-    const lista = correos
-      .split(',')
-      .map((c) => c.trim())
-      .filter(Boolean)
-    if (conEnvio && (!lista.length || lista.some((c) => !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(c)))) {
-      e.correos = 'Escribe uno o más correos válidos separados por coma.'
-    }
     setErrores(e)
     if (Object.keys(e).length) return
     guardar.mutate(
@@ -71,7 +53,7 @@ export function GuardarConsultaModal({
         tipo: reporte,
         filtros,
         visibilidad,
-        envio: conEnvio ? { frecuencia, dia_hora: diaHora, formato, correos: lista } : null,
+        envio: null,
       },
       {
         onSuccess: (c) => {
@@ -95,7 +77,7 @@ export function GuardarConsultaModal({
       icon={Save}
       iconTone="ok"
       title="Guardar consulta"
-      description="Guarda los filtros actuales para volver a usarlos o recibirlos por correo."
+      description="Guarda los filtros actuales para volver a usarlos."
       footer={
         <>
           <span className="mr-auto self-center text-nota text-tinta-terciaria">
@@ -179,66 +161,6 @@ export function GuardarConsultaModal({
           Todo el equipo técnico (solo lectura)
         </label>
       </fieldset>
-      <fieldset className="m-0 border-0 p-0">
-        <legend className="mb-1 p-0 etiqueta">Envío programado</legend>
-        {(
-          [
-            ['no', 'No enviar'],
-            ['semana', 'Cada semana'],
-            ['mes', 'Cada mes'],
-          ] as const
-        ).map(([v, t]) => (
-          <label key={v} className={RADIO}>
-            <input
-              type="radio"
-              name="cg-env"
-              checked={frecuencia === v}
-              onChange={() => setFrecuencia(v)}
-            />
-            {t}
-          </label>
-        ))}
-      </fieldset>
-      {conEnvio && (
-        <>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <FormField label="Día y hora" htmlFor="cg-dh">
-              <Select
-                id="cg-dh"
-                value={diaHora}
-                onChange={(e) => setDiaHora(e.target.value)}
-                options={['Lunes · 07:00', 'Martes · 07:00', 'Viernes · 16:00'].map((v) => ({
-                  value: v,
-                  label: v,
-                }))}
-              />
-            </FormField>
-            <FormField label="Formato" htmlFor="cg-f">
-              <Select
-                id="cg-f"
-                value={formato}
-                onChange={(e) => setFormato(e.target.value)}
-                options={['PDF', 'CSV', 'PDF y CSV'].map((v) => ({ value: v, label: v }))}
-              />
-            </FormField>
-          </div>
-          <FormField
-            label="Enviar a"
-            htmlFor="cg-c"
-            required
-            error={errores.correos}
-            hint="Formato nombre@dominio · separa varios correos con coma"
-          >
-            <Input
-              id="cg-c"
-              value={correos}
-              invalid={!!errores.correos}
-              aria-describedby={fieldDescriptionId('cg-c')}
-              onChange={(e) => setCorreos(e.target.value)}
-            />
-          </FormField>
-        </>
-      )}
     </Modal>
   )
 }
@@ -292,10 +214,7 @@ export function ConsultasGuardadas({ onGuardarActuales }: { onGuardarActuales: (
             >
               <div className="min-w-0 flex-1">
                 <div className="font-semibold">{c.nombre}</div>
-                <div className="text-cuerpo-sm text-tinta-terciaria">
-                  {c.descripcion}
-                  {c.envio && ` · envío ${c.envio.frecuencia === 'semana' ? 'semanal' : 'mensual'}`}
-                </div>
+                <div className="text-cuerpo-sm text-tinta-terciaria">{c.descripcion}</div>
               </div>
               <span className="text-cuerpo-sm font-semibold tabular-nums">{c.resultado}</span>
               <span className="inline-flex h-6 items-center rounded-sm border border-borde bg-neutro-suave px-2 text-xs font-semibold text-neutro">
@@ -350,7 +269,7 @@ export function ConsultasGuardadas({ onGuardarActuales }: { onGuardarActuales: (
         open={!!borrar}
         danger
         title={`¿Eliminar «${borrar?.nombre ?? ''}»?`}
-        message="La consulta deja de aparecer para todo el equipo y se cancela su envío programado. Los datos de los reportes no cambian."
+        message="La consulta deja de aparecer para todo el equipo. Los datos de los reportes no cambian."
         confirmLabel="Eliminar consulta"
         loading={eliminar.isPending}
         onCancel={() => setBorrar(null)}

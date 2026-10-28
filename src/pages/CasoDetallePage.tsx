@@ -11,7 +11,6 @@ import { useAuth } from '@/context/AuthContext'
 import {
   CasoEncabezado,
   CuestionarioDialog,
-  ExtenderConservacionDialog,
   GaleriaEvidencias,
   HistorialDialog,
   PanelDiagnostico,
@@ -26,7 +25,7 @@ import { Rol } from '@/types/enums'
 import { formatearFechaCorta, formatearHora } from '@/utils/fechas'
 import { PATHS } from '@/routes/paths'
 
-type Ventana = 'datos' | 'reasignar' | 'cuestionario' | 'historial' | 'extender' | null
+type Ventana = 'datos' | 'reasignar' | 'cuestionario' | 'historial' | null
 
 /** Botón-resumen que abre una ventana (pf-resumen): cuestionario e historial. */
 function Resumen({
@@ -142,7 +141,6 @@ export default function CasoDetallePage() {
         usuarioId={usuario?.id ?? ''}
         onProductorFinca={() => setVentana('datos')}
         onReasignar={() => setVentana('reasignar')}
-        onExtender={() => setVentana('extender')}
       />
 
       <div className="grid items-start gap-6 lg:grid-cols-12">
@@ -178,9 +176,6 @@ export default function CasoDetallePage() {
         <CuestionarioDialog caso={caso} onClose={() => setVentana(null)} />
       )}
       {ventana === 'historial' && <HistorialDialog caso={caso} onClose={() => setVentana(null)} />}
-      {ventana === 'extender' && (
-        <ExtenderConservacionDialog caso={caso} onClose={() => setVentana(null)} />
-      )}
     </>
   )
 }

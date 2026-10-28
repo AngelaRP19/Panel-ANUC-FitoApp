@@ -1,7 +1,7 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { adaptadorSimulado } from '@/mocks/authSimulado'
-import { notificaciones, usuarios } from '@/mocks/fixtures/usuarios'
+import { usuarios } from '@/mocks/fixtures/usuarios'
 import { renderApp } from '@/test/renderApp'
 
 const LIDER = 'lider@anuc.test'
@@ -93,52 +93,20 @@ describe('Mi cuenta', () => {
     })
   })
 
-  it('el líder ve sus avisos y guarda las preferencias', async () => {
-    const { user } = await renderApp(LIDER, '/mi-cuenta')
-    const notif = await screen.findByRole('region', { name: 'Notificaciones' })
-    await within(notif).findByText('Casos nuevos sin técnico')
-    for (const t of [
-      'Cambios de estado en los casos',
-      'Alertas epidemiológicas generadas',
-      'Casos próximos a vencer',
-      'Resumen diario',
-    ]) {
-      expect(within(notif).getByText(t)).toBeInTheDocument()
-    }
-    expect(within(notif).queryByText('Casos nuevos asignados a mí')).toBeNull()
-    expect(within(notif).getByRole('switch', { name: 'Resumen diario' })).not.toBeChecked()
-
-    await user.click(within(notif).getByRole('switch', { name: 'Resumen diario' }))
-    const canales = within(notif).getByRole('group', { name: 'Canales para Resumen diario' })
-    await user.click(within(canales).getByRole('checkbox', { name: 'Correo' }))
-    await user.click(within(notif).getByRole('button', { name: 'Guardar preferencias' }))
-    expect(await within(notif).findByText('Elige al menos un canal.')).toBeInTheDocument()
-
-    await user.click(within(canales).getByRole('checkbox', { name: 'Panel' }))
-    await user.click(within(notif).getByRole('button', { name: 'Guardar preferencias' }))
-    expect(await screen.findByText('Preferencias guardadas')).toBeInTheDocument()
-    const resumen = notificaciones.get('u-wilmar')!.find((a) => a.clave === 'RESUMEN_DIARIO')!
-    expect(resumen).toMatchObject({ activo: true, canales: { panel: true, correo: false } })
+  it('no muestra preferencias de notificaciones (D-16)', async () => {
+    await renderApp(LIDER, '/mi-cuenta')
+    expect(await screen.findByRole('heading', { name: 'Mi cuenta' })).toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'Notificaciones' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Guardar preferencias' })).toBeNull()
   })
 
-  it('el técnico ve sus propios avisos con el filtro de vereda', async () => {
-    const { user } = await renderApp(TECNICO, '/mi-cuenta')
+  it('el técnico ve su rol de solo lectura', async () => {
+    await renderApp(TECNICO, '/mi-cuenta')
     expect(
       await screen.findByText(
         'Técnico. Solo el líder técnico puede cambiar tu rol o desactivar tu cuenta.',
       ),
     ).toBeInTheDocument()
-    const notif = seccion('Notificaciones')
-    await within(notif).findByText('Casos nuevos asignados a mí')
-    expect(within(notif).getByText('Alertas epidemiológicas (solo consulta)')).toBeInTheDocument()
-    expect(within(notif).getByText('Comentarios del líder técnico')).toBeInTheDocument()
-    expect(within(notif).queryByText('Casos nuevos sin técnico')).toBeNull()
-
-    await user.selectOptions(within(notif).getByLabelText('Solo de la vereda'), 'JURACAMBITA')
-    await user.click(within(notif).getByRole('button', { name: 'Guardar preferencias' }))
-    expect(await screen.findByText('Preferencias guardadas')).toBeInTheDocument()
-    expect(notificaciones.get('u-ana')!.find((a) => a.clave === 'ALERTAS_CONSULTA')!.vereda).toBe(
-      'JURACAMBITA',
-    )
+    expect(screen.queryByRole('region', { name: 'Notificaciones' })).toBeNull()
   })
 })

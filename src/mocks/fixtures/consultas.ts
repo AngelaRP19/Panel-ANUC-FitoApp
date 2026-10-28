@@ -21,7 +21,6 @@ function crear(): ConsultaFixture[] {
       tipo: 'casos',
       descripcion: 'Para repartir la carga entre técnicos',
       filtros: { periodo: 'anio', estado: 'PENDIENTE_REVISION', espera: '2' },
-      envio: { frecuencia: 'semana', dia_hora: 'Lunes · 07:00', formato: 'PDF', correos: [] },
     },
     {
       ...base,
